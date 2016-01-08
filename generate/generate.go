@@ -2,6 +2,7 @@ package generate
 
 import (
 	"errors"
+	"os"
 	"io/ioutil"
 
 	"github.com/wlMalk/ormator/generate/internal/parser"
@@ -24,9 +25,16 @@ func Generate(path string, b []byte) error {
 	if err != nil {
 		return err
 	}
-	return generate(path, config)
+	return generateORM(path, config)
 }
 
-func generate(path string, config *parser.Config) error {
+func generateORM(path string, config *parser.Config) error {
+	mkdir(path + "database")
+	mkdir(path + "database" + string(os.PathSeparator) + "orm")
+	mkdir(path + "database" + string(os.PathSeparator) + "orm" + string(os.PathSeparator) + "callback")
+	mkdir(path + "database" + string(os.PathSeparator) + "orm" + string(os.PathSeparator) + "table")
+	mkdir(path + "database" + string(os.PathSeparator) + "orm" + string(os.PathSeparator) + "query")
+	mkdir(path + "database" + string(os.PathSeparator) + "orm" + string(os.PathSeparator) + "model")
+	mkdir(path + "database" + string(os.PathSeparator) + "orm" + string(os.PathSeparator) + "model" + string(os.PathSeparator) + "slice")
 	return nil
 }
