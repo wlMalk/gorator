@@ -1,21 +1,51 @@
 package generate
 
 import (
-	"errors"
-	"os"
+	"bytes"
+	"fmt"
+	"go/format"
 	"io/ioutil"
+	"os"
+	"path/filepath"
+	"text/template"
 
-	"github.com/wlMalk/ormator/generate/internal/parser"
+	_ "github.com/wlMalk/ormator/driver"
+	"github.com/wlMalk/ormator/parser"
 )
 
 const (
 	VERSION = "0.1"
 )
 
+var tmpls *template.Template
+var ormTmplsMap map[string]string = map[string]string{
+	"database": "database",
+	"orm":      "database/orm",
+	"callback": "database/orm/callback",
+	"query":    "database/orm/query",
+	"table":    "database/orm/table",
+	"model":    "database/orm/model",
+	"slice":    "database/orm/slice",
+}
+var ormDirs []string = []string{
+	"database", "database/orm", "database/orm/callback",
+	"database/orm/query", "database/orm/table",
+	"database/orm/model", "database/orm/slice",
+}
+
+func init() {
+	tmplsDir := getFullPath(os.Getenv("GOPATH"), "src/github.com/wlMalk/ormator/templates/")
+	_, err := filepath.Glob(tmplsDir + "*.tmpl")
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(0)
+	}
+}
+
 func GenerateFromFile(path string) error {
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
-		return errors.New("could not open config file")
+		return fmt.Errorf("could not open config file")
 	}
 	return Generate(getPath(path), file)
 }
@@ -25,16 +55,28 @@ func Generate(path string, b []byte) error {
 	if err != nil {
 		return err
 	}
+	// a, _ := json.Marshal(config)
+	// fmt.Println(string(a))
 	return generateORM(path, config)
 }
 
 func generateORM(path string, config *parser.Config) error {
-	mkdir(path + "database")
-	mkdir(path + "database" + string(os.PathSeparator) + "orm")
-	mkdir(path + "database" + string(os.PathSeparator) + "orm" + string(os.PathSeparator) + "callback")
-	mkdir(path + "database" + string(os.PathSeparator) + "orm" + string(os.PathSeparator) + "table")
-	mkdir(path + "database" + string(os.PathSeparator) + "orm" + string(os.PathSeparator) + "query")
-	mkdir(path + "database" + string(os.PathSeparator) + "orm" + string(os.PathSeparator) + "model")
-	mkdir(path + "database" + string(os.PathSeparator) + "orm" + string(os.PathSeparator) + "model" + string(os.PathSeparator) + "slice")
+	for _, d := range ormDirs {
+		mkdir(getFullPath(path, d))
+	}
+
+	var w bytes.Buffer
+	for t, dir := range ormTmplsMap {
+		err := tmpls.ExecuteTemplate(&w, t, config)
+		if err != nil {
+			return err
+		}
+		b, err := format.Source(w.Bytes())
+		if err != nil {
+			return err
+		}
+		saveFile(getFullPath(path, dir+"/"+t+"_gen.go"), b)
+		w.Reset()
+	}
 	return nil
 }
