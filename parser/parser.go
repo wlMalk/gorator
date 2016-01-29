@@ -20,6 +20,10 @@ func mi(m interface{}) map[interface{}]interface{} {
 	return m.(map[interface{}]interface{})
 }
 
+func si(m interface{}) []interface{} {
+	return m.([]interface{})
+}
+
 func Parse(b []byte) (*Config, error) {
 
 	defer func() {

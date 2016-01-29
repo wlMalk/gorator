@@ -21,22 +21,7 @@ func (mo *Model) parse(name string, m map[interface{}]interface{}) error {
 	mo.def()
 	mo.Name = name
 
-	err := mo.parseFields(m)
-	if err != nil {
-		return err
-	}
-
-	err = mo.parseRelations(m)
-	if err != nil {
-		return err
-	}
-
-	err = mo.parseCallbacks(m)
-	if err != nil {
-		return err
-	}
-
-	err = mo.parsePrimaryKey(m)
+	err := mo.parseRelations(m)
 	if err != nil {
 		return err
 	}
@@ -56,17 +41,32 @@ func (mo *Model) parse(name string, m map[interface{}]interface{}) error {
 		return err
 	}
 
+	err = mo.parseUuid(m)
+	if err != nil {
+		return err
+	}
+
+	err = mo.parseFields(m)
+	if err != nil {
+		return err
+	}
+
+	err = mo.parseCallbacks(m)
+	if err != nil {
+		return err
+	}
+
+	err = mo.parsePrimaryKey(m)
+	if err != nil {
+		return err
+	}
+
 	err = mo.parseHoldOriginal(m)
 	if err != nil {
 		return err
 	}
 
 	err = mo.parseSlice(m)
-	if err != nil {
-		return err
-	}
-
-	err = mo.parseUuid(m)
 	if err != nil {
 		return err
 	}
@@ -111,6 +111,7 @@ func (mo *Model) parseRelations(m map[interface{}]interface{}) error {
 
 var mCallbacks = []string{
 	"beforeSave", "afterSave",
+	"beforeSelect", "afterSelect",
 	"beforeUpdate", "afterUpdate",
 	"beforeInsert", "afterInsert",
 	"beforeDelete", "afterDelete",
@@ -166,6 +167,34 @@ func (mo *Model) checkCallback(c string) error {
 }
 
 func (mo *Model) parsePrimaryKey(m map[interface{}]interface{}) error {
+	if _, ok := m[modelPrimaryKey]; ok {
+		mo.PrimaryKey.Fields = []string{}
+		for _, v := range si(m[modelPrimaryKey]) {
+			av := v.(string)
+
+			foundM := false
+			for _, f := range mo.Fields {
+				if av == f.Name {
+					foundM = true
+					break
+				}
+			}
+			if !foundM {
+				return fmt.Errorf("no '%s' field found in '%s' model for '%s'", av, mo.Name, modelPrimaryKey)
+			}
+
+			foundPK := false
+			for _, pk := range mo.PrimaryKey.Fields {
+				if av == pk {
+					foundPK = true
+					break
+				}
+			}
+			if !foundPK {
+				mo.PrimaryKey.Fields = append(mo.PrimaryKey.Fields, av)
+			}
+		}
+	}
 	return nil
 }
 
