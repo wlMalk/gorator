@@ -10,6 +10,8 @@ import (
 	"text/template"
 
 	_ "github.com/wlMalk/ormator/driver"
+	_ "github.com/wlMalk/ormator/driver/pgsql"
+
 	"github.com/wlMalk/ormator/parser"
 )
 
@@ -17,7 +19,8 @@ const (
 	VERSION = "0.1"
 )
 
-var tmpls *template.Template
+var tmpls *template.Template = template.New("")
+
 var ormTmplsMap map[string]string = map[string]string{
 	"database": "database",
 	"orm":      "database/orm",
@@ -35,7 +38,18 @@ var ormDirs []string = []string{
 
 func init() {
 	tmplsDir := getFullPath(os.Getenv("GOPATH"), "src/github.com/wlMalk/ormator/templates/")
-	_, err := filepath.Glob(tmplsDir + "*.tmpl")
+	tmplFiles, err := filepath.Glob(tmplsDir + "*/*.tmpl")
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(0)
+	}
+	tf, err := filepath.Glob(tmplsDir + "*.tmpl")
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(0)
+	}
+	tmplFiles = append(tmplFiles, tf...)
+	tmpls, err = tmpls.Funcs(getFuncsMap()).ParseFiles(tmplFiles...)
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(0)
@@ -75,7 +89,11 @@ func generateORM(path string, config *parser.Config) error {
 		if err != nil {
 			return err
 		}
-		saveFile(getFullPath(path, dir+"/"+t+"_gen.go"), b)
+		err = saveFile(getFullPath(path, dir+"/"+t+"_gen.go"), b)
+		if err != nil {
+			return err
+		}
+
 		w.Reset()
 	}
 	return nil
