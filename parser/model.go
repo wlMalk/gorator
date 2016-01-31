@@ -83,6 +83,7 @@ func (mo *Model) parseFields(m map[interface{}]interface{}) error {
 	if _, ok := m[modelFields]; ok {
 		for k, v := range mi(m[modelFields]) {
 			field := &Field{}
+			field.Model = mo
 			err := field.parse(s(k), mi(v))
 			if err != nil {
 				return err
@@ -168,7 +169,6 @@ func (mo *Model) checkCallback(c string) error {
 
 func (mo *Model) parsePrimaryKey(m map[interface{}]interface{}) error {
 	if _, ok := m[modelPrimaryKey]; ok {
-		mo.PrimaryKey.Fields = []string{}
 		for _, v := range si(m[modelPrimaryKey]) {
 			av := v.(string)
 
@@ -364,10 +364,6 @@ func (mo *Model) parseUuid(m map[interface{}]interface{}) error {
 		}
 	}
 	return nil
-}
-
-func (mo *Model) parseTable(m map[string]interface{}) (*Table, error) {
-	return nil, nil
 }
 
 func (mo *Model) finalize(m map[interface{}]interface{}) error {

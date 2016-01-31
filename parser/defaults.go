@@ -22,6 +22,14 @@ func (mo *Model) def() {
 	mo.Uuid = 4
 
 	mo.Sliced = true
+
+	mo.defPrimaryKey()
+
+}
+
+func (t *Table) def() {
+	t.Schema = ""
+	t.IsPivot = false
 }
 
 func (r *Relation) def() {
@@ -37,8 +45,9 @@ func (f *Field) defCallbacks() {
 
 }
 
-func (m *Model) defPrimaryKey() {
-	m.PrimaryKey = &PrimaryKey{
+func (mo *Model) defPrimaryKey() {
+	mo.PrimaryKey = &PrimaryKey{
+		Model:  mo,
 		Fields: []string{"ID"},
 	}
 }

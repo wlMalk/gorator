@@ -48,6 +48,13 @@ func (d *Database) parseModels(m map[interface{}]interface{}) error {
 			if err != nil {
 				return err
 			}
+			table := &Table{}
+			table.Model = model
+			err = table.parse(s(k), mi(v))
+			if err != nil {
+				return err
+			}
+			model.Table = table
 			d.Models = append(d.Models, model)
 		}
 	} else {

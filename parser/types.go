@@ -24,12 +24,12 @@ type Database struct {
 type Schema struct {
 	Name     string
 	Database *Database
-	Models   []*Table
+	Tables   []*Table
 }
 
 type Table struct {
 	Name   string
-	Schema *Schema
+	Schema string
 	Model  *Model
 
 	IsPivot bool
@@ -107,6 +107,7 @@ type Field struct {
 	Incrementing bool
 	InDB         bool
 	Exported     bool
+	Primitive    bool
 
 	Where   bool
 	OrderBy bool

@@ -127,7 +127,8 @@ func (f *Field) parseType(m map[interface{}]interface{}) error {
 	if !ok {
 		return fmt.Errorf("could not parse '%s' for '%s' field", fieldType, f.Name)
 	}
-	f.Type = av
+	f.TypeInDB = av
+	f.Type = f.Model.Database.Driver.Type(f.TypeInDB)
 	return nil
 }
 

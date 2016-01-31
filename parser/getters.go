@@ -9,15 +9,23 @@ func (c *Config) GetSchemas() (s []*Schema) {
 
 func (d *Database) GetSchemas() (s []*Schema) {
 	for _, m := range d.Models {
-		duplicate := false
-		for _, sc := range s {
-			if sc.Name == m.Table.Schema.Name {
-				duplicate = true
-				break
+		if m.Table.Schema != "" {
+			ind := -1
+			for i, sc := range s {
+				if sc.Name == m.Table.Schema {
+					ind = i
+					break
+				}
 			}
-		}
-		if !duplicate {
-			s = append(s, m.Table.Schema)
+			if ind == -1 {
+				s = append(s, &Schema{
+					Database: d,
+					Name:     m.Table.Schema,
+					Tables:   []*Table{m.Table},
+				})
+			} else {
+				s[ind].Tables = append(s[ind].Tables, m.Table)
+			}
 		}
 	}
 	return
