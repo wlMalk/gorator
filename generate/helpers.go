@@ -4,14 +4,36 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"text/template"
+
+	"github.com/wlMalk/gorator/parser"
+
 )
 
+func getPackage(name string, config *parser.Config) interface{} {
+
+	return struct {
+		Name           string
+		GoratorVersion string
+		ConfigVersion  string
+		Description    string
+		Imports        []map[string]string
+	}{
+		Name:           name,
+		GoratorVersion: config.GoratorVersion,
+		ConfigVersion:  config.Version,
+		Description:    packageDescriptions[name],
+		Imports:        config.Imports[name],
+	}
+
+}
+
 func getPath(path string) string {
-	return strings.Replace(path, "config.yml", "", 1)
+	return strings.TrimSuffix(path, string(os.PathSeparator))
 }
 
 func getImportPath(path string) string {
-	return strings.Replace(strings.Replace(path, os.Getenv("GOPATH")+string(os.PathSeparator)+"src"+string(os.PathSeparator), "", 1), string(os.PathSeparator)+"config.yml", "", 1)
+	return getPath(strings.Replace(path, os.Getenv("GOPATH")+string(os.PathSeparator)+"src"+string(os.PathSeparator), "", 1))
 }
 
 func getFullPath(path string, subpath string) string {

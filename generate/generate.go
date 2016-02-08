@@ -9,10 +9,9 @@ import (
 	"path/filepath"
 	"text/template"
 
-	_ "github.com/wlMalk/ormator/driver"
-	_ "github.com/wlMalk/ormator/driver/pgsql"
+	_ "github.com/wlMalk/gorator/driver/pgsql"
 
-	"github.com/wlMalk/ormator/parser"
+	"github.com/wlMalk/gorator/parser"
 )
 
 const (
@@ -26,29 +25,20 @@ var ormTmplsMap map[string]string = map[string]string{
 	"orm":      "database/orm",
 	"callback": "database/orm/callback",
 	"query":    "database/orm/query",
-	"table":    "database/orm/table",
 	"model":    "database/orm/model",
-	"slice":    "database/orm/slice",
 }
 var ormDirs []string = []string{
 	"database", "database/orm", "database/orm/callback",
-	"database/orm/query", "database/orm/table",
-	"database/orm/model", "database/orm/slice",
+	"database/orm/query", "database/orm/model",
 }
 
 func init() {
-	tmplsDir := getFullPath(os.Getenv("GOPATH"), "src/github.com/wlMalk/ormator/templates/")
+	tmplsDir := getFullPath(os.Getenv("GOPATH"), "src/github.com/wlMalk/gorator/templates/")
 	tmplFiles, err := filepath.Glob(tmplsDir + "*/*.tmpl")
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(0)
 	}
-	tf, err := filepath.Glob(tmplsDir + "*.tmpl")
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(0)
-	}
-	tmplFiles = append(tmplFiles, tf...)
 	tmpls, err = tmpls.Funcs(getFuncsMap()).ParseFiles(tmplFiles...)
 	if err != nil {
 		fmt.Println(err.Error())
@@ -56,19 +46,30 @@ func init() {
 	}
 }
 
-func GenerateFromFile(path string) error {
-	file, err := ioutil.ReadFile(path)
+func Generate(path string) error {
+	path = getPath(path)
+
+	configFiles, err := filepath.Glob(path + "/*.yml")
 	if err != nil {
 		return fmt.Errorf("could not open config file")
 	}
-	return Generate(getPath(path), file)
-}
 
-func Generate(path string, b []byte) error {
-	config, err := parser.Parse(b)
+	importPath := getImportPath(path)
+	var files [][]byte
+
+	for _, f := range configFiles {
+		file, err := ioutil.ReadFile(f)
+		if err != nil {
+			return fmt.Errorf("could not open config file")
+		}
+		files = append(files, file)
+	}
+
+	config, err := parser.Parse(importPath, files...)
 	if err != nil {
 		return err
 	}
+
 	// a, _ := json.Marshal(config)
 	// fmt.Println(string(a))
 	return generateORM(path, config)
@@ -81,14 +82,32 @@ func generateORM(path string, config *parser.Config) error {
 
 	var w bytes.Buffer
 	for t, dir := range ormTmplsMap {
-		err := tmpls.ExecuteTemplate(&w, t, config)
-		if err != nil {
-			return err
+		for _, db := range config.Databases {
+			err := tmpls.ExecuteTemplate(&w, "heading", getPackage(t, config))
+			if err != nil {
+				return err
+			}
+
+			if db.Driver.Generate(t) {
+				err = tmpls.ExecuteTemplate(&w, t, config)
+				if err != nil {
+					return err
+				}
+			}
+			// driver headings
+			err = db.Driver.Execute(&w, t, config)
+			if err != nil {
+				return err
+			}
 		}
+
+		// fix white spaces
+
 		b, err := format.Source(w.Bytes())
 		if err != nil {
 			return err
 		}
+
 		err = saveFile(getFullPath(path, dir+"/"+t+"_gen.go"), b)
 		if err != nil {
 			return err

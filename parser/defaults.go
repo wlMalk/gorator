@@ -1,7 +1,56 @@
 package parser
 
 func (c *Config) def() {
+	c.defImports()
+}
 
+func (c *Config) defImports() {
+	c.Imports = map[string][]map[string]string{}
+
+	c.Imports["database"] = []map[string]string{
+		map[string]string{
+			"database/sql": "",
+			"strings":      "",
+			"fmt":          "",
+		}, map[string]string{},
+		map[string]string{
+			"github.com/wlMalk/gorator/database": "odatabase",
+		},
+	}
+	c.Imports["orm"] = []map[string]string{
+		map[string]string{},
+		map[string]string{
+			c.Path + "/database":           "",
+			c.Path + "/database/orm/query": "",
+			c.Path + "/database/orm/model": "",
+		}, map[string]string{
+			"github.com/wlMalk/gorator/database": "odatabase",
+		},
+	}
+	c.Imports["query"] = []map[string]string{
+		map[string]string{
+			"database/sql": "",
+			"strings":      "",
+			"fmt":          "",
+		}, map[string]string{},
+		map[string]string{
+			"github.com/wlMalk/gorator/query":    "oquery",
+			"github.com/wlMalk/gorator/database": "odatabase",
+		},
+	}
+	c.Imports["model"] = []map[string]string{
+		map[string]string{
+			"encoding/json": "",
+		}, map[string]string{
+			c.Path + "/database/orm/query": "",
+		},
+		map[string]string{},
+	}
+	c.Imports["callback"] = []map[string]string{
+		map[string]string{},
+		map[string]string{},
+		map[string]string{},
+	}
 }
 
 func (d *Database) def() {

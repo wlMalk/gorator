@@ -3,7 +3,7 @@ package parser
 import (
 	"fmt"
 
-	"github.com/wlMalk/ormator/driver"
+	"github.com/wlMalk/gorator/driver"
 )
 
 const (

@@ -2,6 +2,9 @@ package parser
 
 import (
 	"fmt"
+	"strings"
+
+	"github.com/gedex/inflector"
 )
 
 const (
@@ -11,7 +14,7 @@ const (
 
 func (t *Table) parse(name string, m map[interface{}]interface{}) error {
 	t.def()
-	t.Name = name
+	t.Name = strings.ToLower(inflector.Pluralize(name))
 
 	err := t.parseNameInDB(m)
 	if err != nil {

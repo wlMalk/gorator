@@ -12,6 +12,12 @@ const (
 	defaultUuid   = 4
 )
 
+const (
+	importsStdLib   = 0
+	importsInternal = 1
+	importsOthers   = 2
+)
+
 func s(s interface{}) string {
 	return s.(string)
 }
@@ -24,7 +30,7 @@ func si(m interface{}) []interface{} {
 	return m.([]interface{})
 }
 
-func Parse(b []byte) (*Config, error) {
+func Parse(path string, files ...[]byte) (*Config, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -33,13 +39,22 @@ func Parse(b []byte) (*Config, error) {
 		}
 	}()
 
-	configMap := map[string]interface{}{}
-	err := yaml.Unmarshal(b, &configMap)
-	if err != nil {
-		return nil, fmt.Errorf("could not unmarshal config file")
-	}
 	config := &Config{}
-	err = config.parse(configMap)
+	config.Path = path
+	var err error
+
+	for _, file := range files {
+		configMap := map[string]interface{}{}
+		err = yaml.Unmarshal(file, &configMap)
+		if err != nil {
+			return nil, fmt.Errorf("could not unmarshal config file")
+		}
+		err = config.parse(configMap)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return config, err
 }
 

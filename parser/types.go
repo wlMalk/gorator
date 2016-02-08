@@ -1,13 +1,15 @@
 package parser
 
 import (
-	"github.com/wlMalk/ormator/driver"
+	"github.com/wlMalk/gorator/driver"
 )
 
 type Config struct {
 	Path           string
 	Version        string
-	OrmatorVersion string
+	GoratorVersion string
+
+	Imports map[string][]map[string]string
 
 	Databases []*Database
 }
