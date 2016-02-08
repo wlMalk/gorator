@@ -1,5 +1,9 @@
 package database
 
+import (
+	"database/sql"
+)
+
 type Table struct {
 	name         string
 	schema       string
@@ -36,4 +40,17 @@ func (t *Table) Name() string {
 
 func (t *Table) Column(a string) string {
 	return t.columns[a]
+}
+
+type DB struct {
+	name string
+	DB   *sql.DB
+}
+
+func New() *DB {
+	return &DB{}
+}
+
+func (db *DB) SetName(name string) {
+	db.name = name
 }
