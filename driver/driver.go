@@ -11,17 +11,15 @@ type Driver interface {
 	Type(string) string
 	Types() map[string]string
 	SetFuncs(template.FuncMap) // sets templates funcs
+	Execute(io.Writer, string, interface{}) error
 	ExecuteDatabase(io.Writer, interface{}) error
 	ExecuteQuery(io.Writer, interface{}) error
 	ExecuteModel(io.Writer, interface{}) error
-	ExecuteTable(io.Writer, interface{}) error
-	ExecuteSlice(io.Writer, interface{}) error
 	ExecuteCallbacks(io.Writer, interface{}) error
+	Generate(string) bool
 	GenerateQuery() bool
-	GenerateTable() bool
 	GenerateDatabase() bool
 	GenerateModel() bool
-	GenerateSlice() bool
 	GenerateCallbacks() bool
 }
 
@@ -69,16 +67,12 @@ func (d *BaseDriver) ExecuteQuery(w io.Writer, data interface{}) error {
 	return d.templates.ExecuteTemplate(w, "query", data)
 }
 
-func (d *BaseDriver) ExecuteTable(w io.Writer, data interface{}) error {
-	return d.templates.ExecuteTemplate(w, "table", data)
-}
-
-func (d *BaseDriver) ExecuteSlice(w io.Writer, data interface{}) error {
-	return d.templates.ExecuteTemplate(w, "slice", data)
-}
-
 func (d *BaseDriver) ExecuteCallbacks(w io.Writer, data interface{}) error {
-	return d.templates.ExecuteTemplate(w, "callbacks", data)
+	return d.templates.ExecuteTemplate(w, "callback", data)
+}
+
+func (d *BaseDriver) Execute(w io.Writer, t string, data interface{}) error {
+	return d.templates.ExecuteTemplate(w, t, data)
 }
 
 func (d *BaseDriver) GenerateDatabase() bool {
@@ -93,22 +87,20 @@ func (d *BaseDriver) GenerateQuery() bool {
 	return d.generate["query"]
 }
 
-func (d *BaseDriver) GenerateTable() bool {
-	return d.generate["table"]
-}
-
-func (d *BaseDriver) GenerateSlice() bool {
-	return d.generate["slice"]
-}
-
 func (d *BaseDriver) GenerateCallbacks() bool {
-	return d.generate["callbacks"]
+	return d.generate["callback"]
+}
+
+func (d *BaseDriver) Generate(t string) bool {
+	return d.generate[t]
 }
 
 var drivers map[string]Driver = map[string]Driver{}
 
 func New(name string, types map[string]string, generate map[string]bool, files []string) BaseDriver {
-	return BaseDriver{name, files, types, generate, template.New("")}
+	d := BaseDriver{name, files, types, generate, template.New("")}
+	d.templates.ParseFiles(d.files...)
+	return d
 }
 
 func Register(d Driver) {
