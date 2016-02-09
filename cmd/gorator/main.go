@@ -10,6 +10,8 @@ import (
 )
 
 func main() {
+	var err error
+
 	gorator := cli.NewApp()
 	gorator.Name = "gorator"
 	gorator.Usage = "The Go ORM generator and more"
@@ -25,13 +27,40 @@ func main() {
 					Value: "",
 					Usage: "path to project folder (must be inside GOPATH)",
 				},
+				cli.StringFlag{
+					Name:  "version",
+					Value: "",
+					Usage: "config version to use (optional)",
+				},
 			},
 			Usage: "generate Go source files based on config file",
 			Action: func(c *cli.Context) {
+				if os.Getenv("GOPATH") == "" {
+					fmt.Println("GOPATH is not defined")
+					os.Exit(0)
+				}
+
 				path := c.String("path")
-				err := generate.Generate(path)
+				if path == "" {
+					path, err = os.Getwd()
+				}
+
 				if err != nil {
 					fmt.Println(err.Error())
+					os.Exit(0)
+				}
+
+				if !strings.Contains(path, os.Getenv("GOPATH")) {
+					fmt.Println("path is not in $GOPATH")
+					os.Exit(0)
+				}
+
+				version := c.String("version")
+
+				err = generate.Generate(path, version)
+				if err != nil {
+					fmt.Println(err.Error())
+					os.Exit(0)
 				}
 			},
 		},
