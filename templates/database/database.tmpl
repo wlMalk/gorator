@@ -1,45 +1,42 @@
 {{define "database"}}
-{{template "heading" .}}
-package database
-
-import(
-    "database/sql"
-    "strings"
-    "errors"
-
-    "github.com/wlMalk/ormator/database"
-)
 
 var(
-{{$i, _ := range .Databases}}
-    {{lower .Name}} *database.DB
+{{range .Databases}}
+    {{.Name}} *odatabase.DB
 {{end}}
 )
 
-func Set(name string, db *sql.DB) (*database.DB, error) {
+func init(){
+    {{range .Databases}}
+        {{.Name}} = odatabase.New()
+        {{.Name}}.SetName("{{.Name}}")
+    {{end}}
+}
+
+func Set(name string, db *sql.DB) (*odatabase.DB, error) {
+    if db == nil{
+        return nil, fmt.Errorf("can not use nil as db")
+    }
     switch strings.ToLower(name){
-        {{$i, _ := range .Databases}}
+        {{range .Databases}}
         case "{{lower .Name}}":
-            {{lower .Name}} = database.New(db)
+            {{lower .Name}}.DB = db
             return {{lower .Name}}, nil
         {{end}}
         default:
-            return nil, errors.New("database \""+ name +"\" was not found")
+            return nil, fmt.Errorf("database '%s' was not found", name)
     }
 }
 
 
-func Get(name string) (*database.DB, error) {
+func Get(name string) (*odatabase.DB, error) {
     switch strings.ToLower(name){
-        {{$i, _ := range .Databases}}
+        {{range .Databases}}
         case "{{lower .Name}}":
-            if {{lower .Name}} == nil{
-                return nil, errors.New("database \""+ name +"\" is not set")
-            }
             return {{lower .Name}}, nil
         {{end}}
         default:
-            return nil, errors.New("database \""+ name +"\" was not found")
+            return nil, fmt.Errorf("database '%s' was not found", name)
     }
 }
 {{end}}
