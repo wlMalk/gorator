@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/gedex/inflector"
+	"github.com/wlMalk/gorator/internal/util"
 )
 
 const (
@@ -14,7 +14,7 @@ const (
 
 func (t *Table) parse(name string, m map[interface{}]interface{}) error {
 	t.def()
-	t.Name = strings.ToLower(inflector.Pluralize(name))
+	t.Name = strings.ToLower(util.Plural(name))
 
 	err := t.parseNameInDB(m)
 	if err != nil {

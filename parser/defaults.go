@@ -41,6 +41,7 @@ func (c *Config) defImports() {
 	c.Imports["model"] = []map[string]string{
 		map[string]string{
 			"encoding/json": "",
+			"bytes":         "",
 		}, map[string]string{
 			c.Path + "/database/orm/query": "",
 		},
@@ -86,7 +87,10 @@ func (r *Relation) def() {
 }
 
 func (f *Field) def() {
+	f.Null = true
 	f.InDB = true
+	f.InEncoding = true
+
 	f.defCallbacks()
 }
 

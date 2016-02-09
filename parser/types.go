@@ -90,11 +90,12 @@ type PrimaryKey struct {
 }
 
 type Field struct {
-	Model    *Model
-	Name     string
-	NameInDB string
-	Type     string
-	TypeInDB string
+	Model          *Model
+	Name           string
+	NameInDB       string
+	Type           string
+	TypeInDB       string
+	NameInEncoding string
 
 	Default interface{}
 
@@ -109,6 +110,7 @@ type Field struct {
 	Incrementing bool
 	InDB         bool
 	Exported     bool
+	InEncoding   bool
 	Primitive    bool
 
 	Where   bool

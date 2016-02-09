@@ -42,19 +42,19 @@ func (d *Database) parseDriver(m map[interface{}]interface{}) error {
 func (d *Database) parseModels(m map[interface{}]interface{}) error {
 	if _, ok := m[databaseModels]; ok {
 		for k, v := range mi(m[databaseModels]) {
-			model := &Model{}
-			model.Database = d
-			err := model.parse(s(k), mi(v))
-			if err != nil {
-				return err
-			}
 			table := &Table{}
-			table.Model = model
-			err = table.parse(s(k), mi(v))
+			err := table.parse(s(k), mi(v))
 			if err != nil {
 				return err
 			}
+			model := &Model{}
 			model.Table = table
+			table.Model = model
+			model.Database = d
+			err = model.parse(s(k), mi(v))
+			if err != nil {
+				return err
+			}
 			d.Models = append(d.Models, model)
 		}
 	} else {

@@ -2,6 +2,8 @@ package parser
 
 import (
 	"fmt"
+
+	"github.com/wlMalk/gorator/internal/util"
 )
 
 var fieldAttrs = []string{"type", "default", "null", "unique", "inDB", "nameInDB", "orderBy", "groupBy", "callbacks"}
@@ -9,6 +11,8 @@ var fieldAttrs = []string{"type", "default", "null", "unique", "inDB", "nameInDB
 func (f *Field) parse(name string, m map[interface{}]interface{}) error {
 	f.def()
 	f.Name = name
+	f.NameInEncoding = util.Snakecase(f.Name)
+	f.NameInDB = f.Model.Table.Name + "_" + f.NameInEncoding
 
 	err := f.parseDefault(m)
 	if err != nil {
@@ -129,6 +133,7 @@ func (f *Field) parseType(m map[interface{}]interface{}) error {
 	}
 	f.TypeInDB = av
 	f.Type = f.Model.Database.Driver.Type(f.TypeInDB)
+	f.Primitive = util.Primitive(f.Type)
 	return nil
 }
 
