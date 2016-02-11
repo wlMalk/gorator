@@ -123,6 +123,7 @@ func (f *Field) parseDefault(m map[interface{}]interface{}) error {
 }
 
 func (f *Field) parseType(m map[interface{}]interface{}) error {
+	// check if type is valid
 	avi, ok := m[fieldType]
 	if !ok {
 		return fmt.Errorf("'%s' is not defined for '%s' field", fieldType, f.Name)

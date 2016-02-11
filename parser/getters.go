@@ -31,6 +31,15 @@ func (d *Database) GetSchemas() (s []*Schema) {
 	return
 }
 
+func (c *Config) GetModel(name string) *Model {
+	for _, m := range c.GetAllModels() { // reconsider this
+		if m.Name == name {
+			return m
+		}
+	}
+	return nil
+}
+
 func (c *Config) GetAllModels() (s []*Model) {
 	for _, d := range c.Databases {
 		s = append(s, d.Models...)
@@ -39,10 +48,7 @@ func (c *Config) GetAllModels() (s []*Model) {
 }
 
 func (d *Database) GetAllModels() (s []*Model) {
-	for _, m := range d.Models {
-		s = append(s, m)
-	}
-	return
+	return d.Models
 }
 
 func (c *Config) GetModels() (s []*Model) {

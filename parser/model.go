@@ -10,6 +10,7 @@ const (
 	modelCallbacks    = "callbacks"
 	modelPrimaryKey   = "primaryKey"
 	modelSoftDelete   = "softDelete"
+	modelAllowExtra   = "allowExtra"
 	modelTimestamps   = "timestamps"
 	modelBy           = "by"
 	modelHoldOriginal = "holdOriginal"
@@ -26,7 +27,12 @@ func (mo *Model) parse(name string, m map[interface{}]interface{}) error {
 		return err
 	}
 
-	err = mo.parseIsSoftDeletable(m)
+	err = mo.parseSoftDelete(m)
+	if err != nil {
+		return err
+	}
+
+	err = mo.parseAllowExtra(m)
 	if err != nil {
 		return err
 	}
@@ -198,7 +204,27 @@ func (mo *Model) parsePrimaryKey(m map[interface{}]interface{}) error {
 	return nil
 }
 
-func (mo *Model) parseIsSoftDeletable(m map[interface{}]interface{}) error {
+func (mo *Model) parseSoftDelete(m map[interface{}]interface{}) error {
+	avi, ok := m[modelSoftDelete]
+	if ok {
+		av, ok := avi.(bool)
+		if !ok {
+			return fmt.Errorf("could not parse '%s' for '%s' model", modelSoftDelete, mo.Name)
+		}
+		mo.SoftDelete = av
+	}
+	return nil
+}
+
+func (mo *Model) parseAllowExtra(m map[interface{}]interface{}) error {
+	avi, ok := m[modelAllowExtra]
+	if ok {
+		av, ok := avi.(bool)
+		if !ok {
+			return fmt.Errorf("could not parse '%s' for '%s' model", modelAllowExtra, mo.Name)
+		}
+		mo.AllowExtra = av
+	}
 	return nil
 }
 

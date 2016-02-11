@@ -62,7 +62,6 @@ type Model struct {
 	Table      *Table
 	Fields     []*Field
 	Relations  []*Relation
-	SoftDelete bool
 
 	PrimaryKey *PrimaryKey
 
@@ -76,6 +75,8 @@ type Model struct {
 	Callbacks []string
 
 	HoldOriginal bool
+	SoftDelete   bool
+	AllowExtra   bool
 
 	Uuid   int
 	Sliced bool
@@ -125,12 +126,19 @@ type Slice struct {
 }
 
 type Relation struct {
-	Model      *Model
-	Name       string
-	OtherModel *Model
-	Type       string
-	ForeignKey string
-	LocalKey   string
-	OtherKey   string
-	Pivot      *Model
+	Model          *Model
+	Name           string
+	NameInEncoding string
+	OtherModelName string
+	OtherModel     *Model
+	Type           string
+	ForeignKey     string
+	LocalKey       string
+	OtherKey       string
+	PivotName      string
+	Query          map[string]interface{}
+	// following is for belongsToMany relations
+	// OtherForeignKey []string
+	// Key             []string
+	Pivot *Model
 }
