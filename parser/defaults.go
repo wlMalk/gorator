@@ -34,14 +34,15 @@ func (c *Config) defImports() {
 			"fmt":          "",
 		}, map[string]string{},
 		map[string]string{
-			"github.com/wlMalk/gorator/query":    "oquery",
-			"github.com/wlMalk/gorator/database": "odatabase",
+			"github.com/wlMalk/gorator/database/query": "oquery",
+			"github.com/wlMalk/gorator/database":       "odatabase",
 		},
 	}
 	c.Imports["model"] = []map[string]string{
 		map[string]string{
 			"encoding/json": "",
 			"bytes":         "",
+			"fmt":           "",
 		}, map[string]string{
 			c.Path + "/database/orm/query": "",
 		},
