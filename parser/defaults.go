@@ -46,7 +46,9 @@ func (c *Config) defImports() {
 		}, map[string]string{
 			c.Path + "/database/orm/query": "",
 		},
-		map[string]string{},
+		map[string]string{
+			"github.com/wlMalk/gorator/database": "odatabase",
+		},
 	}
 	c.Imports["callback"] = []map[string]string{
 		map[string]string{},
