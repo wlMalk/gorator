@@ -4,6 +4,17 @@ import (
 	"database/sql"
 )
 
+type Scanner interface {
+	Scan(...interface{}) error
+}
+
+type Rower interface {
+	Scanner
+	Next() bool
+	Columns() ([]string, error)
+	Close() error
+}
+
 type Table struct {
 	name         string
 	schema       string
@@ -43,8 +54,8 @@ func (t *Table) Column(a string) string {
 }
 
 type DB struct {
+	*sql.DB
 	name string
-	DB   *sql.DB
 }
 
 func New() *DB {
