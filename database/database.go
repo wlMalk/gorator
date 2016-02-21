@@ -4,6 +4,24 @@ import (
 	"database/sql"
 )
 
+type Driver interface {
+	Queryer
+	QueryRower
+	Execer
+}
+
+type Queryer interface {
+	Query(string, ...interface{}) (Rower, error)
+}
+
+type QueryRower interface {
+	QueryRow(string, ...interface{}) (Rower, error)
+}
+
+type Execer interface {
+	Exec(string, ...interface{}) (Result, error)
+}
+
 type Scanner interface {
 	Scan(...interface{}) error
 }
@@ -15,33 +33,38 @@ type Rower interface {
 	Close() error
 }
 
+type Result interface {
+	sql.Result
+	InsertIds() ([]interface{}, error)
+}
+
+type Tabler interface {
+	Driver
+	Name() string
+	Columns(string) string
+}
+
 type Table struct {
-	name         string
-	schema       string
-	columns      map[string]string
-	nameReady    bool
-	schemaReady  bool
-	columnsReady bool
+	name    string
+	schema  string
+	columns map[string]string
 }
 
 func (t *Table) SetName(name string) {
-	if !t.nameReady {
+	if t.name == "" {
 		t.name = name
-		t.nameReady = true
 	}
 }
 
 func (t *Table) SetSchema(schema string) {
-	if !t.schemaReady {
+	if t.schema == "" {
 		t.schema = schema
-		t.schemaReady = true
 	}
 }
 
 func (t *Table) SetColumns(columns map[string]string) {
-	if !t.columnsReady {
+	if t.columns == nil || len(t.columns) == 0 {
 		t.columns = columns
-		t.columnsReady = true
 	}
 }
 
