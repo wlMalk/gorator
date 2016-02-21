@@ -48,12 +48,12 @@ var tmpls *template.Template = template.New("")
 var ormTmplsMap map[string]string = map[string]string{
 	"database": "database",
 	"orm":      "database/orm",
-	"callback": "database/orm/callback",
+	"callback": "database/orm/internal/callback",
 	"query":    "database/orm/query",
 	"model":    "database/orm/model",
 }
 var ormDirs []string = []string{
-	"database", "database/orm", "database/orm/callback",
+	"database", "database/orm", "database/orm/internal/callback",
 	"database/orm/query", "database/orm/model",
 }
 
@@ -103,6 +103,10 @@ func Generate(path string, version string) error {
 		return err
 	}
 
+	return GenerateFrom(path, config)
+}
+
+func GenerateFrom(path string, config *parser.Config) error {
 	// a, _ := json.Marshal(config)
 	// fmt.Println(string(a))
 	return generateORM(path, config)
