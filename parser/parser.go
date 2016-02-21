@@ -30,7 +30,7 @@ func si(m interface{}) []interface{} {
 	return m.([]interface{})
 }
 
-func Parse(path string, files ...[]byte) (*Config, error) {
+func Parse(path string, configs ...[]byte) (*Config, error) {
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -43,9 +43,9 @@ func Parse(path string, files ...[]byte) (*Config, error) {
 	config.Path = path
 	var err error
 
-	for _, file := range files {
+	for _, c := range configs {
 		configMap := map[string]interface{}{}
-		err = yaml.Unmarshal(file, &configMap)
+		err = yaml.Unmarshal(c, &configMap)
 		if err != nil {
 			return nil, fmt.Errorf("could not unmarshal config file")
 		}
