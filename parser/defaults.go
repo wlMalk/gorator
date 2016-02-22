@@ -20,11 +20,13 @@ func (c *Config) defImports() {
 	c.Imports["orm"] = []map[string]string{
 		map[string]string{},
 		map[string]string{
-			c.Path + "/database":           "",
-			c.Path + "/database/orm/query": "",
-			c.Path + "/database/orm/model": "",
+			c.Path + "/database":                       "",
+			c.Path + "/database/orm/query":             "",
+			c.Path + "/database/orm/model":             "",
+			c.Path + "/database/orm/internal/callback": "",
 		}, map[string]string{
-			"github.com/wlMalk/gorator/database": "odatabase",
+			"github.com/wlMalk/gorator/database":       "odatabase",
+			"github.com/wlMalk/gorator/database/query": "oquery",
 		},
 	}
 	c.Imports["query"] = []map[string]string{
@@ -41,13 +43,15 @@ func (c *Config) defImports() {
 	c.Imports["model"] = []map[string]string{
 		map[string]string{
 			// "encoding/json": "gojson",
-			"bytes": "",
-			"fmt":   "",
+			"bytes":   "",
+			"fmt":     "",
+			"strings": "",
 		}, map[string]string{
-			c.Path + "/database/orm/query": "",
+			c.Path + "/database/orm/query": "_",
 		},
 		map[string]string{
 			"github.com/wlMalk/gorator/database": "odatabase",
+			"github.com/wlMalk/json":             "",
 		},
 	}
 	c.Imports["callback"] = []map[string]string{
