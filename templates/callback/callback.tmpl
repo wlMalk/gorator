@@ -1,0 +1,38 @@
+{{define "callback"}}
+var(
+    {{range .Databases}}
+    {{range .Models}}
+    {{.Name}} *{{lower (.Name)}} = &{{lower (.Name)}}{}
+    {{end}}
+    {{end}}
+)
+
+{{range .Databases}}
+{{range .Models}}
+type {{lower .Name}} struct{
+    {{range .Callbacks}}
+    {{.}} func(odatabase.Transaction, oquery.Query, odatabase.Model) error
+    {{.}}Slice func(odatabase.Transaction, oquery.Query, odatabase.Slice) error
+    {{end}}
+}
+
+{{$model := .}}
+{{range .Callbacks}}
+func (self *{{lower $model.Name}}) {{upper .}}(f func(odatabase.Transaction, oquery.Query, odatabase.Model) error){
+    self.{{.}} = f
+}
+func (self *{{lower $model.Name}}) {{upper .}}Slice(f func(odatabase.Transaction, oquery.Query, odatabase.Slice) error){
+    self.{{.}}Slice = f
+}
+
+func (self *{{lower $model.Name}}) Dispatch{{upper .}}(tx odatabase.Transaction, q oquery.Query, m odatabase.Model) error{
+    return self.{{.}}(tx, q, m)
+}
+func (self *{{lower $model.Name}}) Dispatch{{upper .}}Slice(tx odatabase.Transaction, q oquery.Query, s odatabase.Slice) error{
+    return self.{{.}}Slice(tx, q, s)
+}
+{{end}}
+
+{{end}}
+{{end}}
+{{end}}
