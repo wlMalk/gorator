@@ -2,12 +2,18 @@ package database
 
 import (
 	"database/sql"
+
+	"github.com/wlMalk/gorator/database/query"
 )
 
-type Driver interface {
+type Runner interface {
 	Queryer
 	QueryRower
 	Execer
+}
+
+type Driver interface {
+	Runner
 	Close() error
 	Ping() error
 	Prepare(string) (*sql.Stmt, error)
@@ -16,9 +22,7 @@ type Driver interface {
 }
 
 type Transaction interface {
-	Queryer
-	QueryRower
-	Execer
+	Runner
 	Rollback() error
 	Commit() error
 	Prepare(string) (*sql.Stmt, error)
@@ -32,14 +36,17 @@ type Slice interface {
 }
 
 type Queryer interface {
+	QueryQ(query.Query) (Rower, error)
 	Query(string, ...interface{}) (Rower, error)
 }
 
 type QueryRower interface {
+	QueryRowQ(query.Query) (Rower, error)
 	QueryRow(string, ...interface{}) (Rower, error)
 }
 
 type Execer interface {
+	ExecQ(query.Query) (Result, error)
 	Exec(string, ...interface{}) (Result, error)
 }
 
@@ -124,16 +131,16 @@ func (db *DB) SetName(name string) {
 	db.name = name
 }
 
-func (db *DB) Query(query string, args ...interface{}) (Rower, error) {
-	return db.DB.Query(query, args...)
-}
-
 func (db *DB) Begin() (Transaction, error) {
 	xtx, err := db.DB.Begin()
 	if err != nil {
 		return nil, err
 	}
 	return &Tx{xtx}, err
+}
+
+func (db *DB) Query(query string, args ...interface{}) (Rower, error) {
+	return db.DB.Query(query, args...)
 }
 
 func (db *DB) QueryRow(query string, args ...interface{}) (Rower, error) {
@@ -154,4 +161,52 @@ func (tx *Tx) QueryRow(query string, args ...interface{}) (Rower, error) {
 
 func (tx *Tx) Exec(query string, args ...interface{}) (Result, error) {
 	return tx.Tx.Exec(query, args...)
+}
+
+func (db *DB) QueryQ(q query.Query) (Rower, error) {
+	str, args, err := q.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	return db.DB.Query(str, args...)
+}
+
+func (db *DB) QueryRowQ(q query.Query) (Rower, error) {
+	str, args, err := q.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	return db.DB.Query(str, args...)
+}
+
+func (db *DB) ExecQ(q query.Query) (Result, error) {
+	str, args, err := q.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	return db.DB.Exec(str, args...)
+}
+
+func (tx *Tx) QueryQ(q query.Query) (Rower, error) {
+	str, args, err := q.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	return tx.Tx.Query(str, args...)
+}
+
+func (tx *Tx) QueryRowQ(q query.Query) (Rower, error) {
+	str, args, err := q.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	return tx.Tx.Query(str, args...)
+}
+
+func (tx *Tx) ExecQ(q query.Query) (Result, error) {
+	str, args, err := q.ToSql()
+	if err != nil {
+		return nil, err
+	}
+	return tx.Tx.Exec(str, args...)
 }
