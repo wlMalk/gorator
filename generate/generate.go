@@ -13,7 +13,12 @@ import (
 	"github.com/wlMalk/gorator/internal/util"
 
 	"github.com/wlMalk/gorator/parser"
+
+	"github.com/fatih/color"
 )
+
+var magenta = color.New(color.FgMagenta, color.Underline).SprintFunc()
+var okMsg = color.New(color.FgGreen, color.Bold).SprintFunc()("OK!")
 
 const (
 	VERSION = "0.1"
@@ -98,10 +103,12 @@ func Generate(path string, version string) error {
 		files = append(files, file)
 	}
 
+	fmt.Printf("parsing config file(s)...") // if show
 	config, err := parser.Parse(importPath, files...)
 	if err != nil {
 		return err
 	}
+	fmt.Printf("\t%s\n", okMsg)
 
 	return GenerateFrom(path, config)
 }
@@ -114,43 +121,78 @@ func GenerateFrom(path string, config *parser.Config) error {
 
 func generateORM(path string, config *parser.Config) error {
 	for _, d := range ormDirs {
-		util.Mkdir(util.GetFullPath(path, d))
+		fmt.Printf("making %s folder...", magenta(d)) // if show
+		err := util.Mkdir(util.GetFullPath(path, d))
+		if err != nil {
+			return err
+		}
+		fmt.Printf("\t%s\n", okMsg)
 	}
 
 	var w bytes.Buffer
 	for t, dir := range ormTmplsMap {
+		err := tmpls.ExecuteTemplate(&w, "heading", getPackage(t, config))
+		if err != nil {
+			return err
+		}
 		for _, db := range config.Databases {
-			err := tmpls.ExecuteTemplate(&w, "heading", getPackage(t, config))
-			if err != nil {
-				return err
-			}
-
-			if db.Driver.Generate(t) {
-				err = tmpls.ExecuteTemplate(&w, t, config)
+			if t != "database" {
+				for _, model := range db.Models {
+					if db.Driver.Generate(t) {
+						fmt.Printf("generating code for %s package - %s model...", magenta(t), magenta(model.Name)) // if show
+						err = tmpls.ExecuteTemplate(&w, t, model)
+						if err != nil {
+							return err
+						}
+						fmt.Printf("\t%s\n", okMsg)
+					} else {
+						// driver headings
+						fmt.Printf("generating %s driver code for %s package - %s model...", magenta(db.Driver.Name()), magenta(t), magenta(model.Name)) // if show
+						err = db.Driver.Execute(&w, t, model)
+						if err != nil {
+							return err
+						}
+						fmt.Printf("\t%s\n", okMsg)
+					}
+				}
+			} else {
+				if db.Driver.Generate(t) {
+					fmt.Printf("generating code for %s database...", magenta(db.Name)) // if show
+					err = tmpls.ExecuteTemplate(&w, t, db)
+					if err != nil {
+						return err
+					}
+					fmt.Printf("\t%s\n", okMsg)
+				}
+				// driver headings
+				// check if tmp is provided
+				fmt.Printf("generating %s driver code for %s database...", magenta(db.Driver.Name()), magenta(db.Name)) // if show
+				err = db.Driver.Execute(&w, t, db)
 				if err != nil {
 					return err
 				}
-			}
-			// driver headings
-			err = db.Driver.Execute(&w, t, config)
-			if err != nil {
-				return err
+				fmt.Printf("\t%s\n", okMsg)
 			}
 		}
 
 		// fix white spaces
 
+		fmt.Printf("formatting code for %s package...", magenta(t)) // if show
 		b, err := format.Source(w.Bytes())
 		if err != nil {
 			return err
 		}
+		fmt.Printf("\t%s\n", okMsg)
 
+		fmt.Printf("saving %s package file...", magenta(t)) // if show
 		err = util.SaveFile(util.GetFullPath(path, dir+"/"+t+"_gen.go"), b)
 		if err != nil {
 			return err
 		}
+		fmt.Printf("\t%s\n", okMsg)
 
 		w.Reset()
 	}
+	fmt.Printf("happy coding!\n") // if show
 	return nil
 }
