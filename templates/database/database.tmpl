@@ -1,42 +1,22 @@
 {{define "database"}}
 
-var(
-{{range .Databases}}
-    {{.Name}} *odatabase.DB
-{{end}}
-)
+var {{.Name}} *odatabase.DB
 
 func init(){
-    {{range .Databases}}
-        {{.Name}} = odatabase.New()
-        {{.Name}}.SetName("{{.Name}}")
-    {{end}}
+    {{.Name}} = odatabase.New()
+    {{.Name}}.SetName("{{.Name}}")
 }
 
-func Set(name string, db *sql.DB) (*odatabase.DB, error) {
+func Set{{upper .Name}}(db *sql.DB) (*odatabase.DB, error) {
     if db == nil{
         return nil, fmt.Errorf("can not use nil as db")
     }
-    switch strings.ToLower(name){
-        {{range .Databases}}
-        case "{{lower .Name}}":
-            {{lower .Name}}.DB = db
-            return {{lower .Name}}, nil
-        {{end}}
-        default:
-            return nil, fmt.Errorf("database '%s' was not found", name)
-    }
+    {{lower .Name}}.DB = db
+    return {{lower .Name}}, nil
 }
 
-
-func Get(name string) (*odatabase.DB, error) {
-    switch strings.ToLower(name){
-        {{range .Databases}}
-        case "{{lower .Name}}":
-            return {{lower .Name}}, nil
-        {{end}}
-        default:
-            return nil, fmt.Errorf("database '%s' was not found", name)
-    }
+func Get{{upper .Name}}() *odatabase.DB {
+    return {{lower .Name}}
 }
+
 {{end}}
