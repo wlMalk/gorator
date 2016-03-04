@@ -1,0 +1,71 @@
+{{define "query_table"}}
+type {{.Name}} struct{
+    *odatabase.Table
+}
+
+var {{plural .Name}} *{{.Name}}
+
+func init(){
+    {{plural .Name}} = &{{.Name}}{&odatabase.Table{}}
+    {{plural .Name}}.SetName("{{.Table.Name}}")
+    {{plural .Name}}.SetColumns(map[string]string{
+        {{range .Fields}}{{if .InDB}}"{{.NameInEncoding}}": "{{.NameInDB}}",{{end}}
+        {{end}}
+    })
+}
+
+// save func
+
+{{if .SoftDelete}}
+func (self *{{.Name}}) SoftDelete() *{{.Name}}Update {
+	return nil
+}{{end}}
+
+func (self *{{.Name}}) Exec(q oquery.Query) (odatabase.Result, error) { // q ...oquery.Query
+    return database.Get{{upper .Database.Name}}().ExecQ(q)
+}
+
+func (self *{{.Name}}) RawExec(q string, args ...interface{}) (odatabase.Result, error) {
+    return database.Get{{upper .Database.Name}}().Exec(q, args...)
+}
+
+func (self *{{.Name}}) Query(q oquery.Query) (odatabase.Rower, error) {
+    return database.Get{{upper .Database.Name}}().QueryQ(q)
+}
+
+func (self *{{.Name}}) RawQuery(q string, args ...interface{}) (odatabase.Rower, error) {
+    return database.Get{{upper .Database.Name}}().Query(q, args...)
+}
+
+func (self *{{.Name}}) QueryRow(q oquery.Query) (odatabase.Rower, error) {
+    return database.Get{{upper .Database.Name}}().QueryRowQ(q)
+}
+
+func (self *{{.Name}}) RawQueryRow(q string, args ...interface{}) (odatabase.Rower, error) {
+    return database.Get{{upper .Database.Name}}().QueryRow(q, args...)
+}
+
+func (self *{{.Name}}) All() (odatabase.Rower, error) {
+	return self.Select().All().Query()
+}
+
+func (self *{{.Name}}) Find({{range .PrimaryKey.GetFields}}{{lower .Name}} {{.Type}}, {{end}}) (odatabase.Rower, error) { // check what primary key is called and whether its multiple
+	return self.Select(){{range .PrimaryKey.GetFields}}.Where{{.Name}}Eq({{lower .Name}}){{end}}.First().QueryRow()
+}
+
+func (self *{{.Name}}) First() (odatabase.Rower, error) { //nth, pagination
+    return self.Select().First().QueryRow()
+}
+
+func (self *{{.Name}}) Last() (odatabase.Rower, error) {
+    return self.Select().Last().QueryRow()
+}
+
+{{template "query_table_where" .}}
+
+
+// preloadWith("users.posts" string,...*Preload)
+// preload("users.posts","photos" ...) ,recursive
+// preload() preloads all direct relations
+// preloadThrough()
+{{end}}

@@ -1,0 +1,239 @@
+{{define "query_select"}}
+
+type {{.Name}}Select struct{
+    query *oquery.SelectQuery
+    preloads map[string]*oquery.Preload
+    args [][]interface{}
+}
+
+func (self *{{.Name}}) Select(c ...string) *{{.Name}}Select {
+    bq := oquery.Select(self.Columns(c...)...)
+	bq.From(self.Name())
+	q := &{{.Name}}Select{
+        query: bq,
+	}
+	return q
+}
+
+func (s *{{.Name}}Select) Columns(c ...interface{}) *{{.Name}}Select {
+	s.query.Columns(c...)
+	return s
+}
+
+func (s *{{.Name}}Select) Prefix(c ...interface{}) *{{.Name}}Select {
+	s.query.Prefix(c...)
+	return s
+}
+
+func (s *{{.Name}}Select) Suffix(c ...interface{}) *{{.Name}}Select {
+    s.query.Suffix(c...)
+	return s
+}
+
+func (s *{{.Name}}Select) Distinct() *{{.Name}}Select {
+    s.query.Distinct()
+	return s
+}
+
+func (s *{{.Name}}Select) DistinctOn(c ...interface{}) *{{.Name}}Select {
+    s.query.DistinctOn(c...)
+	return s
+}
+
+func (s *{{.Name}}Select) Where(c ...interface{}) *{{.Name}}Select {
+    s.query.Where(c...)
+	return s
+}
+
+{{template "query_select_where" .}}
+
+func (s *{{.Name}}Select) Having(c ...interface{}) *{{.Name}}Select {
+    s.query.Having(c...)
+	return s
+}
+
+func (s *{{.Name}}Select) Joins(c ...*oquery.JoinToken) *{{.Name}}Select {
+    s.query.Joins(c...)
+	return s
+}
+
+func (s *{{.Name}}Select) Preloads(c ...*oquery.Preload) *{{.Name}}Select {
+    for _,a:=range c{
+        s.preloads[a.Name] = a
+    }
+	return s
+}
+
+func (s *{{.Name}}Select) Preload(c ...string) *{{.Name}}Select {
+    for _,a:=range c{
+        p:=&oquery.Preload{}
+        i:=strings.Index(a,".")
+        if i>-1{
+            p.Name = a[i+1:]
+            a=a[:i]
+        }else{
+            p.Name = a
+        }
+
+        if pp, exists:=s.preloads[a]; i>-1 && exists{
+            pp.Preloads=append(s.preloads[a].Preloads,p)
+        }else if i>-1{
+            s.preloads[a]=&oquery.Preload{
+                Name: a,
+                Preloads: []*oquery.Preload{p},
+            }
+        }else{
+            s.preloads[a] = p
+        }
+    }
+	return s
+}
+
+func (s *{{.Name}}Select) PreloadWith(c string, q *oquery.SelectQuery) *{{.Name}}Select {
+    p:=&oquery.Preload{}
+    i:=strings.Index(c,".")
+    if i > -1{
+        p.Name = c[i+1:]
+        c=c[:i]
+    }else{
+        p.Name = c
+    }
+    p.Q=q
+    if pp, exists:=s.preloads[c]; i>-1 && exists{
+        pp.Preloads=append(s.preloads[c].Preloads,p)
+    }else if i>-1{
+        s.preloads[c]=&oquery.Preload{
+            Name: c,
+            Preloads: []*oquery.Preload{p},
+        }
+    }else{
+        s.preloads[c] = p
+    }
+	return s
+}
+
+// func (s *Select) Union(c ...*oquery.JoinToken) *Select {}
+// func (s *Select) UnionAll(c ...*oquery.JoinToken) *Select {}
+
+func (s *{{.Name}}Select) Name(name string) {
+    s.query.Name(name)
+}
+
+func (s *{{.Name}}Select) GetName() string {
+    return s.query.GetName()
+}
+
+func (s *{{.Name}}Select) Join(j interface{}, on interface{}) *{{.Name}}Select {
+    s.query.Join(j,on)
+	return s
+}
+
+func (s *{{.Name}}Select) LeftJoin(j interface{}, on interface{}) *{{.Name}}Select {
+    s.query.LeftJoin(j,on)
+	return s
+}
+
+func (s *{{.Name}}Select) RightJoin(j interface{}, on interface{}) *{{.Name}}Select {
+    s.query.RightJoin(j,on)
+	return s
+}
+
+func (s *{{.Name}}Select) Alias(a string) *{{.Name}}Select {
+    s.query.Alias(a)
+	return s
+}
+
+func (s *{{.Name}}Select) With(c ...interface{}) *{{.Name}}Select {
+    s.query.With(c...)
+	return s
+}
+
+func (s *{{.Name}}Select) Limit(l uint64) *{{.Name}}Select {
+    s.query.Limit(l)
+	return s
+}
+
+func (s *{{.Name}}Select) Offset(o uint64) *{{.Name}}Select {
+    s.query.Offset(o)
+	return s
+}
+
+func (s *{{.Name}}Select) OrderBy(o ...string) *{{.Name}}Select {
+    s.query.OrderBy(o...)
+	return s
+}
+
+func (s *{{.Name}}Select) OrderByDesc(o ...string) *{{.Name}}Select {
+    s.query.OrderByDesc(o...)
+	return s
+}
+
+func (s *{{.Name}}Select) GroupBy(o ...string) *{{.Name}}Select {
+    s.query.GroupBy(o...)
+	return s
+}
+
+func (s *{{.Name}}Select) PlaceholderFormat(f oquery.PlaceholderFormat) *{{.Name}}Select {
+    s.query.PlaceholderFormat(f)
+	return s
+}
+
+func (s *{{.Name}}Select) ToSql() (string, []interface{}, error) {
+    return s.query.ToSql(s.args)
+}
+
+func (s *{{.Name}}Select) All() *{{.Name}}Select {
+	return s
+}
+
+func (s *{{.Name}}Select) Find({{range .PrimaryKey.GetFields}}{{lower .Name}} {{.Type}}, {{end}}) *{{.Name}}Select {
+	s{{range .PrimaryKey.GetFields}}.Where{{.Name}}Eq({{lower .Name}}){{end}}.First()
+	return s
+}
+
+func (s *{{.Name}}Select) First() *{{.Name}}Select {
+    return s
+}
+
+func (s *{{.Name}}Select) Last() *{{.Name}}Select {
+    s.OrderBy("-id").First()
+    return s
+}
+
+func (s *{{.Name}}Select) Query() (odatabase.Rower, error) {
+    return s.QueryWith(database.Get{{upper .Database.Name}}())
+}
+
+func (s *{{.Name}}Select) QueryRow() (odatabase.Rower, error) {
+    return s.QueryRowWith(database.Get{{upper .Database.Name}}())
+}
+
+func (s *{{.Name}}Select) Exec() (odatabase.Result, error) {
+    return s.ExecWith(database.Get{{upper .Database.Name}}())
+}
+
+func (s *{{.Name}}Select) QueryWith(r odatabase.Runner) (odatabase.Rower, error) {
+    str, args, err := s.ToSql()
+    if err != nil{
+        return nil, err
+    }
+    return r.Query(str, args...)
+}
+
+func (s *{{.Name}}Select) QueryRowWith(r odatabase.Runner) (odatabase.Rower, error) {
+    str, args, err := s.ToSql()
+    if err != nil{
+        return nil, err
+    }
+    return r.QueryRow(str, args...)
+}
+
+func (s *{{.Name}}Select) ExecWith(r odatabase.Runner) (odatabase.Result, error) {
+    str, args, err := s.ToSql()
+    if err != nil{
+        return nil, err
+    }
+    return r.Exec(str, args...)
+}
+
+{{end}}

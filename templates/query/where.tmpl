@@ -1,0 +1,39 @@
+{{define "query_table_where"}}
+{{range .Fields}}
+{{if primitive .Type}}
+func (self *{{$.Name}}) {{.Name}}In(a ...interface{}) *oquery.ArgToken {
+    return oquery.In(self.Column("{{.NameInEncoding}}"),a...)
+}
+
+func (self *{{$.Name}}) {{.Name}}InQuery(q oquery.Query) *oquery.ArgToken {
+    return oquery.InQuery(self.Column("{{.NameInEncoding}}"),q)
+}
+
+func (self *{{$.Name}}) {{.Name}}Eq(a interface{}) *oquery.ArgToken {
+    return oquery.Eq(self.Column("{{.NameInEncoding}}"),"",a)
+}
+
+func (self *{{$.Name}}) {{.Name}}NotEq(a interface{}) *oquery.ArgToken {
+    return oquery.NotEq(self.Column("{{.NameInEncoding}}"),"",a)
+}
+
+{{if numerical .Type}}
+func (self *{{$.Name}}) {{.Name}}Gt(a interface{}) *oquery.ArgToken {
+    return oquery.Gt(self.Column("{{.NameInEncoding}}"),"",a)
+}
+
+func (self *{{$.Name}}) {{.Name}}Lt(a interface{}) *oquery.ArgToken {
+    return oquery.Lt(self.Column("{{.NameInEncoding}}"),"",a)
+}
+
+func (self *{{$.Name}}) {{.Name}}GtEq(a interface{}) *oquery.ArgToken {
+    return oquery.GtEq(self.Column("{{.NameInEncoding}}"),"",a)
+}
+
+func (self *{{$.Name}}) {{.Name}}LtEq(a interface{}) *oquery.ArgToken {
+    return oquery.LtEq(self.Column("{{.NameInEncoding}}"),"",a)
+}
+{{end}}
+{{end}}
+{{end}}
+{{end}}
