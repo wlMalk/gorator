@@ -1,0 +1,174 @@
+{{define "model_funcs"}}
+func (self *{{.Name}}) HasChanged() bool {
+	return self.changed
+}
+
+func (self *{{.Name}}) IsNew() bool {
+	return self.new
+}
+
+func (self *{{.Name}}) Touch() {
+	self.changed = true
+}
+
+func (self *{{.Name}}) Save() error {
+	// callbacks
+    return nil
+}
+
+// func (self *{{.Name}}) SaveWith(ex odatabase.Execer) error {
+// 	// callbacks
+//     return nil
+// }
+//
+// func (self *{{.Name}}) SaveQuery(ex odatabase.Execer) oquery.Queryed {
+// 	// callbacks
+//     return nil
+// }
+
+func (self *{{.Name}}) Delete() error {
+    return nil
+}
+
+// func (self *{{.Name}}) DeleteWith(ex odatabase.Execer) error {
+// 	// callbacks
+//     return nil
+// }
+//
+// func (self *{{.Name}}) DeleteQuery(ex odatabase.Execer) oquery.Queryed {
+// 	// callbacks
+//     return nil
+// }
+
+func (self *{{.Name}}) SoftDelete() error {
+    return nil
+}
+
+// func (self *{{.Name}}) SoftDeleteWith(ex odatabase.Execer) error {
+// 	// callbacks
+//     return nil
+// }
+//
+// func (self *{{.Name}}) SoftDeleteQuery(ex odatabase.Execer) oquery.Queryed {
+// 	// callbacks
+//     return nil
+// }
+
+// callbacks, before, afterSaveAll, afterSave, afterUpdate, afterDelete, afterRetrieve
+
+// func (self *{{.Name}}) tableName() string {
+// 	return "{{plural (unexport .Name)}}"
+// }
+
+// if json or xml
+func (self *{{.Name}}) MarshalJSON() ([]byte, error) {
+	return self.ToJSON() // apply if user wants to use stdlib
+}
+
+func (self *{{.Name}}) ToJSON() ([]byte, error) { // specify whether flattened or not
+	var b bytes.Buffer
+	var err error
+	_,err = b.WriteRune('{')
+	if err!=nil{
+		return nil, err
+	}
+	{{range .Fields}}
+	{{if .InEncoding}}
+	if self.{{unexport $.Name}}.{{.Name}} == nil || *self.{{unexport $.Name}}.{{.Name}} == {{zeroValue .Type}} {
+		_,err = b.WriteString("\"{{.NameInEncoding}}\":")
+		if err!=nil{
+			return nil, err
+		}
+		{{if .Primitive}}
+		{{if eq .Type "string"}}
+		_,err = b.WriteRune('"')
+		if err!=nil{
+			return nil, err
+		}
+		_,err = b.WriteString(fmt.Sprint(*self.{{unexport $.Name}}.{{.Name}}))
+		if err!=nil{
+			return nil, err
+		}
+		_,err = b.WriteRune('"')
+		if err!=nil{
+			return nil, err
+		}
+		{{else}}
+		_,err = b.WriteString(fmt.Sprint(*self.{{unexport $.Name}}.{{.Name}}))
+		if err!=nil{
+			return nil, err
+		}
+		{{end}}
+		{{else}}
+		bf, err:=*self.{{unexport $.Name}}.{{.Name}}.JSON()
+		if err!=nil{
+			return nil, err
+		}
+		_,err = b.Write(bf)
+		if err!=nil{
+			return nil, err
+		}
+		{{end}}
+	}
+	{{end}}
+	{{end}}
+	_, err = b.WriteRune('}')
+	if err!=nil{
+		return nil, err
+	}
+	return b.Bytes(), nil
+}
+
+func (self *{{.Name}}) FromJSON(b []byte, tokens []byte, positions []int) error { // apply all conditions whether json, xml are used, and from where
+	return nil
+}
+
+func (self *{{.Name}}) UnmarshalJSON(b []byte) error {
+	return json.Parse(b, self) // allow option to make it xml
+}
+
+func (self *{{.Name}}) traverseFields(columns []string) []interface{} {
+	values := make([]interface{}, len(columns))
+	for i, c := range columns{
+		switch c {
+		{{range .Fields}}
+		case "{{.NameInDB}}":
+			values[i] = &self.{{lower $.Name}}.{{.Name}}
+		{{end}}
+		{{if .AllowExtra}}
+		default:
+			ev := new(interface{})
+			values[i] = &ev
+			self.{{lower .Name}}.Extra[c] = ev
+		{{end}}
+		}
+	}
+	return values
+}
+
+func (self *{{.Name}}) Scan(v interface{}) error {
+	b, ok := v.([]byte)
+	if !ok {
+		return fmt.Errorf("scan source was not []byte for '%s' model", "{{.Name}}")
+	}
+	return json.Parse(b, self) // allow option to make it xml
+}
+
+func (self *{{.Name}}) Populate(row odatabase.Rower) error {
+	columns, err := row.Columns()
+	if err != nil {
+		return err
+	}
+	defer row.Close()
+
+	fields := self.traverseFields(columns)
+
+	err = row.Scan(fields...)
+	if err != nil {
+		return nil
+	}
+
+	self.new = false
+	return nil
+}
+{{end}}

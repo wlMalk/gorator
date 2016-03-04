@@ -1,0 +1,42 @@
+{{define "field_funcs"}}
+{{if .AllowExtra}}
+func (self *{{.Name}}) Extra() map[string]interface{} {
+	return self.{{unexport .Name}}.Extra
+}
+{{end}}
+{{range .Fields}}
+{{if .InDB}}
+{{if .Exported}}
+func (self *{{$.Name}}) {{.Name}}Changed() bool {
+	return self.changes["{{lower .Name}}"]
+}
+
+func (self *{{$.Name}}) {{.Name}}IsSet() (b bool) {
+	if self.{{unexport $.Name}}.{{.Name}} != nil{
+		b = true
+	}
+	return
+}
+
+func (self *{{$.Name}}) {{.Name}}() (f {{.Type}}) {
+	// callbacks
+	if self.{{unexport $.Name}}.{{.Name}} != nil {
+		f = {{if primitive .Type}}*{{end}}self.{{unexport $.Name}}.{{.Name}}
+	}
+	return
+}
+
+func (self *{{$.Name}}) Set{{.Name}}(f {{.Type}}) (err error) {
+	// validations
+	// callbacks
+	{{if primitive .Type}}*{{end}}self.{{unexport $.Name}}.{{.Name}} = f
+
+	self.changed = true
+	self.changes["{{lower .Name}}"] = true
+
+    return
+}
+{{end}}
+{{end}}
+{{end}}
+{{end}}
