@@ -1,0 +1,206 @@
+{{define "orm"}}
+
+var {{plural .Name}} *{{lower (plural .Name)}}
+
+func init(){
+    {{plural .Name}} = &{{lower (plural .Name)}}{
+        {{.Name}}: query.{{plural .Name}}, // no need for this
+    }
+    {{range .Callbacks}}
+    callback.{{$.Name}}.{{upper .}}(func(r odatabase.Runner, q oquery.Query, m odatabase.Model) error {
+		ma := m.(*model.{{$.Name}})
+        var err error
+		for _, c := range {{plural $.Name}}.{{.}}Callbacks {
+            err = c(r, q, ma)
+            if err != nil{
+                return err
+            }
+		}
+        return nil
+	})
+    callback.{{$.Name}}.{{upper .}}Slice(func(r odatabase.Runner, q oquery.Query, m odatabase.Slice) error {
+		ma := m.(*model.{{$.Name}}Slice)
+        var err error
+		for _, c := range {{plural $.Name}}.{{.}}SliceCallbacks {
+			err = c(r, q, ma)
+            if err != nil{
+                return err
+            }
+		}
+        return nil
+	})
+    {{end}}
+}
+
+type {{lower (plural .Name)}} struct{
+    *query.{{.Name}}
+
+    {{range .Callbacks}}
+    {{.}}Callbacks []func(odatabase.Runner, oquery.Query, *model.{{$.Name}}) error
+    {{.}}SliceCallbacks []func(odatabase.Runner, oquery.Query, *model.{{$.Name}}Slice) error
+    {{end}}
+}
+
+func (self *{{lower (plural .Name)}}) New() *model.{{.Name}} {
+	return model.New{{.Name}}()
+}
+
+func (self *{{lower (plural .Name)}}) NewSlice() model.{{.Name}}Slice {
+    return model.{{.Name}}Slice{}
+}
+
+func (self *{{lower (plural .Name)}}) Query(q oquery.Query) (model.{{.Name}}Slice, error) {
+    str, args, err := q.ToSql()
+    if err != nil {
+        return nil, err
+    }
+
+    // preloading goes here
+
+    return self.RawQuery(str, args...)
+}
+
+func (self *{{lower (plural .Name)}}) QueryRow(q oquery.Query) (*model.{{.Name}}, error) {
+    str, args, err := q.ToSql()
+    if err != nil {
+        return nil, err
+    }
+
+    // preloading goes here
+
+    return self.RawQueryRow(str, args...)
+}
+
+func (self *{{lower (plural .Name)}}) Exec(q oquery.Query) (odatabase.Result, error) { // q ...oquery.Query
+    str, args, err := q.ToSql()
+    if err != nil {
+        return nil, err
+    }
+
+    return self.RawExec(str, args...)
+}
+
+func (self *{{lower (plural .Name)}}) RawQuery(str string, args ...interface{}) (model.{{.Name}}Slice, error) {
+    rows, err := self.{{.Name}}.RawQuery(str, args...)
+    if err != nil {
+        return nil, err
+    }
+
+    sli := self.NewSlice()
+    err = sli.Populate(rows)
+    if err != nil{
+        return nil, err
+    }
+
+    return sli, nil
+}
+
+func (self *{{lower (plural .Name)}}) RawQueryRow(str string, args ...interface{}) (*model.{{.Name}}, error) {
+    row, err := self.{{.Name}}.RawQueryRow(str, args...)
+    if err != nil {
+        return nil, err
+    }
+
+    mod := self.New()
+    err = mod.Populate(row)
+    if err != nil{
+        return nil, err
+    }
+
+    return mod, nil
+}
+
+func (self *{{lower (plural .Name)}}) RawExec(str string, args ...interface{}) (odatabase.Result, error) {
+    return self.{{.Name}}.RawExec(str, args...)
+}
+
+func (self *{{lower (plural .Name)}}) Select(c ...string) *query.{{.Name}}Select {
+	return self.{{.Name}}.Select(c...)
+}
+
+func (self *{{lower (plural .Name)}}) Update(c ...interface{}) *query.{{.Name}}Update {
+	return self.{{.Name}}.Update()
+}
+
+func (self *{{lower (plural .Name)}}) Insert(c ...interface{}) *query.{{.Name}}Insert {
+	return self.{{.Name}}.Insert()
+}
+
+func (self *{{lower (plural .Name)}}) Delete(c ...interface{}) *query.{{.Name}}Delete {
+	return self.{{.Name}}.Delete()
+}
+
+{{if .SoftDelete}}
+func (self *{{lower (plural .Name)}}) SoftDelete() *query.{{.Name}}Update {
+	return self.{{.Name}}.SoftDelete()
+}{{end}}
+
+func (self *{{lower (plural .Name)}}) All() (model.{{.Name}}Slice, error) {
+	rows, err := self.{{.Name}}.All()
+    if err != nil {
+        return nil, err
+    }
+
+    sli := self.NewSlice()
+    err = sli.Populate(rows)
+    if err != nil{
+        return nil, err
+    }
+
+    return sli, nil
+}
+
+func (self *{{lower (plural .Name)}}) Find({{range .PrimaryKey.GetFields}}{{lower .Name}} {{.Type}}, {{end}}) (*model.{{.Name}}, error) { // check what primary key is called and whether its multiple
+	row, err := self.{{.Name}}.Find({{range .PrimaryKey.GetFields}}{{lower .Name}}, {{end}})
+    if err != nil {
+        return nil, err
+    }
+
+    mod := self.New()
+    err = mod.Populate(row)
+    if err != nil{
+        return nil, err
+    }
+
+    return mod, nil
+}
+
+func (self *{{lower (plural .Name)}}) First() (*model.{{.Name}}, error) {
+    row, err := self.{{.Name}}.First()
+    if err != nil {
+        return nil, err
+    }
+
+    mod := self.New()
+    err = mod.Populate(row)
+    if err != nil{
+        return nil, err
+    }
+
+    return mod, nil
+}
+
+func (self *{{lower (plural .Name)}}) Last() (*model.{{.Name}}, error) {
+    row, err := self.{{.Name}}.Last()
+    if err != nil {
+        return nil, err
+    }
+
+    mod := self.New()
+    err = mod.Populate(row)
+    if err != nil{
+        return nil, err
+    }
+
+    return mod, nil
+}
+
+{{range .Callbacks}}
+func (self *{{lower (plural $.Name)}}) Add{{upper .}}Callback(f ...func(odatabase.Runner, oquery.Query, *model.{{$.Name}}) error){
+    self.{{.}}Callbacks = append(self.{{.}}Callbacks, f...)
+}
+func (self *{{lower (plural $.Name)}}) Add{{upper .}}SliceCallback(f ...func(odatabase.Runner, oquery.Query, *model.{{$.Name}}Slice) error){
+    self.{{.}}SliceCallbacks = append(self.{{.}}SliceCallbacks, f...)
+}
+{{end}}
+{{end}}
