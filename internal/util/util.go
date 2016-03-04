@@ -13,20 +13,23 @@ import (
 
 func GetFuncsMap() template.FuncMap {
 	return template.FuncMap{
-		"snakecase": snaker.CamelToSnake,
 		"plural":    inflector.Pluralize,
 		"unexport":  strings.ToLower,
 		"exported":  ast.IsExported,
 		"primitive": Primitive,
 		"numerical": Numerical,
 		"lower":     strings.ToLower,
-		"upper":     strings.ToTitle,
+		"upper":     Upper,
 		"zeroValue": ZeroValue,
 	}
 }
 
 func Plural(s string) string {
 	return inflector.Pluralize(s)
+}
+
+func Upper(s string) string {
+	return strings.ToUpper(string(s[0])) + s[1:]
 }
 
 func Snakecase(s string) string {
