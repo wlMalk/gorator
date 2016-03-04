@@ -1,38 +1,27 @@
 {{define "callback"}}
-var(
-    {{range .Databases}}
-    {{range .Models}}
-    {{.Name}} *{{lower (.Name)}} = &{{lower (.Name)}}{}
-    {{end}}
-    {{end}}
-)
+var {{.Name}} *{{lower (.Name)}} = &{{lower (.Name)}}{}
 
-{{range .Databases}}
-{{range .Models}}
 type {{lower .Name}} struct{
     {{range .Callbacks}}
-    {{.}} func(odatabase.Transaction, oquery.Query, odatabase.Model) error
-    {{.}}Slice func(odatabase.Transaction, oquery.Query, odatabase.Slice) error
+    {{.}} func(odatabase.Runner, oquery.Query, odatabase.Model) error
+    {{.}}Slice func(odatabase.Runner, oquery.Query, odatabase.Slice) error
     {{end}}
 }
 
-{{$model := .}}
 {{range .Callbacks}}
-func (self *{{lower $model.Name}}) {{upper .}}(f func(odatabase.Transaction, oquery.Query, odatabase.Model) error){
+func (self *{{lower $.Name}}) {{upper .}}(f func(odatabase.Runner, oquery.Query, odatabase.Model) error){
     self.{{.}} = f
 }
-func (self *{{lower $model.Name}}) {{upper .}}Slice(f func(odatabase.Transaction, oquery.Query, odatabase.Slice) error){
+func (self *{{lower $.Name}}) {{upper .}}Slice(f func(odatabase.Runner, oquery.Query, odatabase.Slice) error){
     self.{{.}}Slice = f
 }
 
-func (self *{{lower $model.Name}}) Dispatch{{upper .}}(tx odatabase.Transaction, q oquery.Query, m odatabase.Model) error{
-    return self.{{.}}(tx, q, m)
+func (self *{{lower $.Name}}) Dispatch{{upper .}}(r odatabase.Runner, q oquery.Query, m odatabase.Model) error{
+    return self.{{.}}(r, q, m)
 }
-func (self *{{lower $model.Name}}) Dispatch{{upper .}}Slice(tx odatabase.Transaction, q oquery.Query, s odatabase.Slice) error{
-    return self.{{.}}Slice(tx, q, s)
+func (self *{{lower $.Name}}) Dispatch{{upper .}}Slice(r odatabase.Runner, q oquery.Query, s odatabase.Slice) error{
+    return self.{{.}}Slice(r, q, s)
 }
 {{end}}
 
-{{end}}
-{{end}}
 {{end}}
