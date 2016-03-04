@@ -260,6 +260,7 @@ func (f *Field) parseCallbacks(m map[interface{}]interface{}) error {
 				}
 			}
 			if !found {
+				f.Model.Database.Config.Imports["orm"][importsInternal][f.Model.Database.Config.Path+"/database/orm/internal/callback"] = ""
 				f.Callbacks = append(f.Callbacks, c)
 			}
 		}

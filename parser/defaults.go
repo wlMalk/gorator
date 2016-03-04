@@ -10,7 +10,6 @@ func (c *Config) defImports() {
 	c.Imports["database"] = []map[string]string{
 		map[string]string{
 			"database/sql": "",
-			"strings":      "",
 			"fmt":          "",
 		}, map[string]string{},
 		map[string]string{
@@ -20,10 +19,8 @@ func (c *Config) defImports() {
 	c.Imports["orm"] = []map[string]string{
 		map[string]string{},
 		map[string]string{
-			c.Path + "/database":                       "",
-			c.Path + "/database/orm/query":             "",
-			c.Path + "/database/orm/model":             "",
-			c.Path + "/database/orm/internal/callback": "",
+			c.Path + "/database/orm/query": "",
+			c.Path + "/database/orm/model": "",
 		}, map[string]string{
 			"github.com/wlMalk/gorator/database":       "odatabase",
 			"github.com/wlMalk/gorator/database/query": "oquery",
@@ -31,10 +28,10 @@ func (c *Config) defImports() {
 	}
 	c.Imports["query"] = []map[string]string{
 		map[string]string{
-			"database/sql": "",
-			"strings":      "",
-			"fmt":          "",
-		}, map[string]string{},
+			"strings": "",
+		}, map[string]string{
+			c.Path + "/database": "",
+		},
 		map[string]string{
 			"github.com/wlMalk/gorator/database/query": "oquery",
 			"github.com/wlMalk/gorator/database":       "odatabase",
@@ -99,6 +96,7 @@ func (r *Relation) def() {
 func (f *Field) def() {
 	f.Null = true
 	f.InDB = true
+	f.Exported = true
 	f.InEncoding = true
 
 	f.defCallbacks()
