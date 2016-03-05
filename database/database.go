@@ -6,6 +6,8 @@ import (
 	"github.com/wlMalk/gorator/database/query"
 )
 
+var ErrNoRows = sql.ErrNoRows
+
 type Runner interface {
 	Queryer
 	QueryRower
