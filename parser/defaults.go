@@ -109,6 +109,6 @@ func (f *Field) defCallbacks() {
 func (mo *Model) defPrimaryKey() {
 	mo.PrimaryKey = &PrimaryKey{
 		Model:  mo,
-		Fields: []string{"ID"},
+		Fields: []string{"Id"},
 	}
 }
