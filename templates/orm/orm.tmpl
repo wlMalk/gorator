@@ -159,6 +159,12 @@ func (self *{{lower (plural .Name)}}) Find({{range .PrimaryKey.GetFields}}{{lowe
     mod := self.New()
     err = mod.Populate(row)
     if err != nil{
+        if err == odatabase.ErrNoRows {
+            {{range .PrimaryKey.GetFields}}
+            mod.Set{{.Name}}({{lower .Name}})
+            {{end}}
+            return mod, nil
+        }
         return nil, err
     }
 
