@@ -161,14 +161,17 @@ func (self *{{.Name}}) Populate(row odatabase.Rower) error {
 	}
 	defer row.Close()
 
-	fields := self.traverseFields(columns)
+	if row.Next() {
+		fields := self.traverseFields(columns)
+		err = row.Scan(fields...)
+		if err != nil {
+			return nil
+		}
 
-	err = row.Scan(fields...)
-	if err != nil {
+		self.new = false
 		return nil
 	}
 
-	self.new = false
-	return nil
+	return odatabase.ErrNoRows
 }
 {{end}}

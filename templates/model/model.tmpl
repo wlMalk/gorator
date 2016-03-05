@@ -23,6 +23,7 @@ func New{{.Name}}() *{{.Name}} {
         {{lower .Name}}: &{{lower .Name}}{ {{if .AllowExtra}}
 			Extra: map[string]interface{}{},
 		{{end}}},
+		changes: map[string]bool{},
         new: true,
     }
 }

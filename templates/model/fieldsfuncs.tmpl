@@ -29,7 +29,7 @@ func (self *{{$.Name}}) {{.Name}}() (f {{.Type}}) {
 func (self *{{$.Name}}) Set{{.Name}}(f {{.Type}}) (err error) {
 	// validations
 	// callbacks
-	{{if primitive .Type}}*{{end}}self.{{unexport $.Name}}.{{.Name}} = f
+	self.{{unexport $.Name}}.{{.Name}} = {{if primitive .Type}}&{{end}}f
 
 	self.changed = true
 	self.changes["{{lower .Name}}"] = true
