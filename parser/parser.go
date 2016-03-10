@@ -73,6 +73,10 @@ func (c *Config) parse(m map[string]interface{}) error {
 	return nil
 }
 
+func (c *Config) addPackage(p *Package) {
+	c.Packages[p.Name] = p
+}
+
 func (c *Config) parseDatabases(m map[string]interface{}) error {
 	if _, ok := m[configDatabases]; ok {
 		for k, v := range mi(m[configDatabases]) {

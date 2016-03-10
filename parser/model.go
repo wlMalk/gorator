@@ -150,7 +150,8 @@ func (mo *Model) parseCallbacks(m map[interface{}]interface{}) error {
 				}
 			}
 			if !found {
-				mo.Database.Config.Imports["orm"][importsInternal][mo.Database.Config.Path+"/database/orm/internal/callback"] = ""
+				mo.Database.Config.Packages["orm"].Imports[importsInternal][mo.Database.Config.Path+"/database/orm/internal/callback"] = ""
+				mo.Database.Config.addPackage(packageCallback(mo.Database.Config))
 				mo.Callbacks = append(mo.Callbacks, c)
 			}
 		}

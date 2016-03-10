@@ -1,64 +1,15 @@
 package parser
 
 func (c *Config) def() {
-	c.defImports()
+	c.defPackages()
 }
 
-func (c *Config) defImports() {
-	c.Imports = map[string][]map[string]string{}
-
-	c.Imports["database"] = []map[string]string{
-		map[string]string{
-			"database/sql": "",
-			"fmt":          "",
-		}, map[string]string{},
-		map[string]string{
-			"github.com/wlMalk/gorator/database": "odatabase",
-		},
-	}
-	c.Imports["orm"] = []map[string]string{
-		map[string]string{},
-		map[string]string{
-			c.Path + "/database/orm/query": "",
-			c.Path + "/database/orm/model": "",
-		}, map[string]string{
-			"github.com/wlMalk/gorator/database":       "odatabase",
-			"github.com/wlMalk/gorator/database/query": "oquery",
-		},
-	}
-	c.Imports["query"] = []map[string]string{
-		map[string]string{
-			"strings": "",
-		}, map[string]string{
-			c.Path + "/database": "",
-		},
-		map[string]string{
-			"github.com/wlMalk/gorator/database/query": "oquery",
-			"github.com/wlMalk/gorator/database":       "odatabase",
-		},
-	}
-	c.Imports["model"] = []map[string]string{
-		map[string]string{
-			// "encoding/json": "gojson",
-			"bytes":   "",
-			"fmt":     "",
-			"strings": "",
-		}, map[string]string{
-			c.Path + "/database/orm/query": "_",
-		},
-		map[string]string{
-			"github.com/wlMalk/gorator/database": "odatabase",
-			"github.com/wlMalk/json":             "",
-		},
-	}
-	c.Imports["callback"] = []map[string]string{
-		map[string]string{},
-		map[string]string{},
-		map[string]string{
-			"github.com/wlMalk/gorator/database/query": "oquery",
-			"github.com/wlMalk/gorator/database":       "odatabase",
-		},
-	}
+func (c *Config) defPackages() {
+	c.Packages = map[string]*Package{}
+	c.addPackage(packageDatabase(c))
+	c.addPackage(packageORM(c))
+	c.addPackage(packageQuery(c))
+	c.addPackage(packageModel(c))
 }
 
 func (d *Database) def() {

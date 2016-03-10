@@ -9,9 +9,16 @@ type Config struct {
 	Version        string
 	GoratorVersion string
 
-	Imports map[string][]map[string]string
+	Packages map[string]*Package
 
 	Databases []*Database
+}
+type Package struct {
+	Config      *Config
+	Name        string
+	Description string
+	Path        string
+	Imports     []map[string]string
 }
 
 type Database struct {
