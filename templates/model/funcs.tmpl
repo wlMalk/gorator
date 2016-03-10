@@ -137,9 +137,8 @@ func (self *{{.Name}}) traverseFields(columns []string) []interface{} {
 		{{end}}
 		{{if .AllowExtra}}
 		default:
-			ev := new(interface{})
-			values[i] = &ev
-			self.{{lower .Name}}.Extra[c] = ev
+			self.{{lower .Name}}.Extra[c] = new(interface{})
+			values[i] = self.{{lower .Name}}.Extra[c]
 		{{end}}
 		}
 	}
