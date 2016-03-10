@@ -16,17 +16,29 @@ func (self *{{.Name}}) Select(c ...string) *{{.Name}}Select {
 }
 
 func (s *{{.Name}}Select) Columns(c ...interface{}) *{{.Name}}Select {
-	s.query.Columns(c...)
+    c, args, err:=oquery.TokenizeAll(c...)
+    if err==nil{
+        s.query.Columns(c...)
+        s.args = append(s.args, args...)
+    }
 	return s
 }
 
 func (s *{{.Name}}Select) Prefix(c ...interface{}) *{{.Name}}Select {
-	s.query.Prefix(c...)
+    c, args, err:=oquery.TokenizeAll(c...)
+    if err==nil{
+        s.query.Prefix(c...)
+        s.args = append(s.args, args...)
+    }
 	return s
 }
 
 func (s *{{.Name}}Select) Suffix(c ...interface{}) *{{.Name}}Select {
-    s.query.Suffix(c...)
+    c, args, err:=oquery.TokenizeAll(c...)
+    if err==nil{
+        s.query.Suffix(c...)
+        s.args = append(s.args, args...)
+    }
 	return s
 }
 
@@ -36,24 +48,31 @@ func (s *{{.Name}}Select) Distinct() *{{.Name}}Select {
 }
 
 func (s *{{.Name}}Select) DistinctOn(c ...interface{}) *{{.Name}}Select {
-    s.query.DistinctOn(c...)
+    c, args, err:=oquery.TokenizeAll(c...)
+    if err==nil{
+        s.query.DistinctOn(c...)
+        s.args = append(s.args, args...)
+    }
 	return s
 }
 
 func (s *{{.Name}}Select) Where(c ...interface{}) *{{.Name}}Select {
-    s.query.Where(c...)
+    c, args, err:=oquery.TokenizeAll(c...)
+    if err==nil{
+        s.query.Where(c...)
+        s.args = append(s.args, args...)
+    }
 	return s
 }
 
 {{template "query_select_where" .}}
 
 func (s *{{.Name}}Select) Having(c ...interface{}) *{{.Name}}Select {
-    s.query.Having(c...)
-	return s
-}
-
-func (s *{{.Name}}Select) Joins(c ...*oquery.JoinToken) *{{.Name}}Select {
-    s.query.Joins(c...)
+    c, args, err:=oquery.TokenizeAll(c...)
+    if err==nil{
+        s.query.Having(c...)
+        s.args = append(s.args, args...)
+    }
 	return s
 }
 
@@ -123,18 +142,37 @@ func (s *{{.Name}}Select) GetName() string {
     return s.query.GetName()
 }
 
+func (s *{{.Name}}Select) Joins(c ...*oquery.JoinToken) *{{.Name}}Select {
+    for i,a:=range c{
+        a, aa, ab, err := oquery.JT(a)
+        if a != nil && err == nil{
+            c[i] = a
+            if aa != nil{
+                s.args = append(s.args, aa)
+            }
+            if ab != nil{
+                s.args = append(s.args, ab)
+            }
+        }else{
+            c = append(c[:i], c[i+1:]...)
+        }
+    }
+    s.query.Joins(c...)
+	return s
+}
+
 func (s *{{.Name}}Select) Join(j interface{}, on interface{}) *{{.Name}}Select {
-    s.query.Join(j,on)
+    s.Joins(oquery.Join(j, on))
 	return s
 }
 
 func (s *{{.Name}}Select) LeftJoin(j interface{}, on interface{}) *{{.Name}}Select {
-    s.query.LeftJoin(j,on)
+    s.Joins(oquery.LeftJoin(j, on))
 	return s
 }
 
 func (s *{{.Name}}Select) RightJoin(j interface{}, on interface{}) *{{.Name}}Select {
-    s.query.RightJoin(j,on)
+    s.Joins(oquery.RightJoin(j, on))
 	return s
 }
 
@@ -144,7 +182,11 @@ func (s *{{.Name}}Select) Alias(a string) *{{.Name}}Select {
 }
 
 func (s *{{.Name}}Select) With(c ...interface{}) *{{.Name}}Select {
-    s.query.With(c...)
+    c, args, err:=oquery.TokenizeAll(c...)
+    if err==nil{
+        s.query.With(c...)
+        s.args = append(s.args, args...)
+    }
 	return s
 }
 
