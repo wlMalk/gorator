@@ -110,7 +110,12 @@ func (t *Table) Columns(a ...string) []string {
 	var b []string
 
 	for _, c := range a {
-		b = append(b, t.columns[c])
+		nc, ok := t.columns[c]
+		if ok {
+			b = append(b, nc)
+		} else {
+			b = append(b, c)
+		}
 	}
 
 	return b
