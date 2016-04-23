@@ -83,6 +83,8 @@ func OverWindow(a interface{}, window string) *Token {
 }
 
 type SelectQuery struct {
+	locked bool
+
 	numTokens         int
 	name              string
 	alias             string
@@ -106,7 +108,6 @@ type SelectQuery struct {
 	orderby           []string
 	groupby           []string
 	placeholderFormat PlaceholderFormat
-	preloads          map[string]*Preload
 }
 
 func Select(c ...string) *SelectQuery {
@@ -250,12 +251,13 @@ func (s *SelectQuery) Joins(c ...*JoinToken) {
 		if ok {
 			t.id = s.numTokens
 			s.numTokens++
+			a.join = t
 		}
 		t, ok = (a.on).(*token)
 		if ok {
 			t.id = s.numTokens
 			s.numTokens++
-
+			a.on = t
 		}
 		s.join = append(s.join, a)
 	}
@@ -331,6 +333,10 @@ func (s *SelectQuery) IntersectAll(c ...interface{}) {
 
 func (s *SelectQuery) Alias(a string) {
 	s.alias = a
+}
+
+func (s *SelectQuery) GetAlias() string {
+	return s.alias
 }
 
 func (s *SelectQuery) With(c ...interface{}) {
@@ -450,34 +456,30 @@ func (s *SelectQuery) ToSql(uargs [][]interface{}) (sqlStr string, args []interf
 				}
 			}
 			switch t := e.(type) {
-			case Selecter:
-				t.SetPlaceholderFormat(s.placeholderFormat)
-				_, err = sql.WriteString(t.GetAlias())
-				if err != nil {
-					return
-				}
-				ns, na, nerr := t.ToSql()
-				err = nerr
-				if err != nil {
-					return
-				}
-				_, err = sql.WriteString(" AS (")
-				if err != nil {
-					return
-				}
-				_, err = sql.WriteString(ns)
-				if err != nil {
-					return
-				}
-				_, err = sql.WriteString(")")
-				if err != nil {
-					return
-				}
-				args = append(args, na...)
 			case *token:
-				_, err = sql.WriteString(t.str)
-				if err != nil {
-					return
+				if t.isQuery {
+					// normalize t.SetPlaceholderFormat(s.placeholderFormat)
+					_, err = sql.WriteString(t.alias)
+					if err != nil {
+						return
+					}
+					_, err = sql.WriteString(" AS (")
+					if err != nil {
+						return
+					}
+					_, err = sql.WriteString(t.str)
+					if err != nil {
+						return
+					}
+					_, err = sql.WriteString(")")
+					if err != nil {
+						return
+					}
+				} else {
+					_, err = sql.WriteString(t.str)
+					if err != nil {
+						return
+					}
 				}
 				args = append(args, uargs[t.id]...)
 			case string:
@@ -579,34 +581,30 @@ func (s *SelectQuery) ToSql(uargs [][]interface{}) (sqlStr string, args []interf
 				}
 			}
 			switch t := e.(type) {
-			case Selecter:
-				t.SetPlaceholderFormat(s.placeholderFormat)
-				ns, na, nerr := t.ToSql()
-				err = nerr
-				if err != nil {
-					return
-				}
-				_, err = sql.WriteString("(")
-				if err != nil {
-					return
-				}
-				_, err = sql.WriteString(ns)
-				if err != nil {
-					return
-				}
-				_, err = sql.WriteString(") ")
-				if err != nil {
-					return
-				}
-				_, err = sql.WriteString(t.GetAlias())
-				if err != nil {
-					return
-				}
-				args = append(args, na...)
 			case *token:
-				_, err = sql.WriteString(t.str)
-				if err != nil {
-					return
+				if t.isQuery {
+					// normalize t.SetPlaceholderFormat(s.placeholderFormat)
+					_, err = sql.WriteString("(")
+					if err != nil {
+						return
+					}
+					_, err = sql.WriteString(t.str)
+					if err != nil {
+						return
+					}
+					_, err = sql.WriteString(") ")
+					if err != nil {
+						return
+					}
+					_, err = sql.WriteString(t.alias)
+					if err != nil {
+						return
+					}
+				} else {
+					_, err = sql.WriteString(t.str)
+					if err != nil {
+						return
+					}
 				}
 				args = append(args, uargs[t.id]...)
 			case string:
@@ -631,41 +629,47 @@ func (s *SelectQuery) ToSql(uargs [][]interface{}) (sqlStr string, args []interf
 				}
 			}
 			switch e.jtype {
+			case JOIN:
+				_, err = sql.WriteString("JOIN ")
+				if err != nil {
+					return
+				}
 			case LEFTJOIN:
 				_, err = sql.WriteString("LEFT JOIN ")
 				if err != nil {
 					return
 				}
+			case RIGHTJOIN:
+				_, err = sql.WriteString("RIGHT JOIN ")
+				if err != nil {
+					return
+				}
 			}
 			switch t := e.join.(type) {
-			case Selecter:
-				t.SetPlaceholderFormat(s.placeholderFormat)
-				ns, na, nerr := t.ToSql()
-				err = nerr
-				if err != nil {
-					return
-				}
-				_, err = sql.WriteString("(")
-				if err != nil {
-					return
-				}
-				_, err = sql.WriteString(ns)
-				if err != nil {
-					return
-				}
-				_, err = sql.WriteString(") ")
-				if err != nil {
-					return
-				}
-				_, err = sql.WriteString(t.GetAlias())
-				if err != nil {
-					return
-				}
-				args = append(args, na...)
 			case *token:
-				_, err = sql.WriteString(t.str)
-				if err != nil {
-					return
+				if t.isQuery {
+					// normalize t.SetPlaceholderFormat(s.placeholderFormat)
+					_, err = sql.WriteString("(")
+					if err != nil {
+						return
+					}
+					_, err = sql.WriteString(t.str)
+					if err != nil {
+						return
+					}
+					_, err = sql.WriteString(") ")
+					if err != nil {
+						return
+					}
+					_, err = sql.WriteString(t.alias)
+					if err != nil {
+						return
+					}
+				} else {
+					_, err = sql.WriteString(t.str)
+					if err != nil {
+						return
+					}
 				}
 				args = append(args, uargs[t.id]...)
 			case string:
@@ -700,7 +704,7 @@ func (s *SelectQuery) ToSql(uargs [][]interface{}) (sqlStr string, args []interf
 			return
 		}
 		for i, e := range s.where {
-			if i > 0 && i < len(s.where) {
+			if i > 0 {
 				_, err = sql.WriteString(" AND ")
 				if err != nil {
 					return
@@ -774,34 +778,30 @@ func (s *SelectQuery) ToSql(uargs [][]interface{}) (sqlStr string, args []interf
 				}
 			}
 			switch t := e.(type) {
-			case Selecter:
-				t.SetPlaceholderFormat(s.placeholderFormat)
-				_, err = sql.WriteString(t.GetAlias())
-				if err != nil {
-					return
-				}
-				ns, na, nerr := t.ToSql()
-				err = nerr
-				if err != nil {
-					return
-				}
-				_, err = sql.WriteString(" AS (")
-				if err != nil {
-					return
-				}
-				_, err = sql.WriteString(ns)
-				if err != nil {
-					return
-				}
-				_, err = sql.WriteString(")")
-				if err != nil {
-					return
-				}
-				args = append(args, na...)
 			case *token:
-				_, err = sql.WriteString(t.str)
-				if err != nil {
-					return
+				if t.isQuery {
+					// normalize t.SetPlaceholderFormat(s.placeholderFormat)
+					_, err = sql.WriteString(t.alias)
+					if err != nil {
+						return
+					}
+					_, err = sql.WriteString(" AS (")
+					if err != nil {
+						return
+					}
+					_, err = sql.WriteString(t.str)
+					if err != nil {
+						return
+					}
+					_, err = sql.WriteString(")")
+					if err != nil {
+						return
+					}
+				} else {
+					_, err = sql.WriteString(t.str)
+					if err != nil {
+						return
+					}
 				}
 				args = append(args, uargs[t.id]...)
 			case string:

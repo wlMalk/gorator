@@ -117,7 +117,7 @@ func In(col string, args ...interface{}) *Token {
 	if l == 0 {
 		return c
 	}
-	c.str = col + " IN (" + strings.Repeat("?,", l)[:l-1] + ")"
+	c.str = col + " IN (?" + strings.Repeat(",?", l-1) + ")"
 	c.args = append(c.args, args...)
 	return c
 }

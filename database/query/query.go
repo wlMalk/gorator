@@ -1,5 +1,9 @@
 package query
 
+import (
+	"strings"
+)
+
 type Query interface {
 	Name(string)
 	GetName() string
@@ -7,6 +11,11 @@ type Query interface {
 }
 
 func Tokenize(q Query) (t *Token, err error) {
+	a, ok := q.(Aliased)
+	if ok {
+		t.isQuery = true
+		t.alias = a.GetAlias()
+	}
 	t.str, t.args, err = q.ToSql()
 	return
 }
@@ -24,10 +33,11 @@ func TokenizeAll(c ...interface{}) ([]interface{}, [][]interface{}, error) {
 			args = append(args, targs)
 		case Query:
 			q := a.(Query)
-			t, targs, err := q.ToSql()
+			at, err := Tokenize(q)
 			if err != nil {
 				return nil, nil, err
 			}
+			t, targs := at.Token()
 			c[i] = t
 			args = append(args, targs)
 		}
@@ -41,21 +51,31 @@ func (e Extra) Get(k string) interface{} {
 	return e[k]
 }
 
-type Selecter interface {
+type Aliased interface {
 	Query
-	Select(...interface{})
 	GetAlias() string
-	SetPlaceholderFormat(PlaceholderFormat)
+}
+
+func Set(k string, v interface{}) *Token {
+	return T(k+" = ?", v)
+}
+
+func Values(v ...interface{}) *Token {
+	return T("(?"+strings.Repeat(",?", len(v)-1)+")", v...)
 }
 
 type token struct {
-	id  int
-	str string
+	id      int
+	isQuery bool
+	alias   string
+	str     string
 }
 
 type Token struct {
-	str  string
-	args []interface{}
+	str     string
+	args    []interface{}
+	isQuery bool
+	alias   string
 }
 
 func (t *Token) String() string {
@@ -63,11 +83,11 @@ func (t *Token) String() string {
 }
 
 func (t *Token) Token() (*token, []interface{}) {
-	return &token{str: t.str}, t.args
+	return &token{str: t.str, isQuery: t.isQuery, alias: t.alias}, t.args
 }
 
 func T(str string, args ...interface{}) *Token {
-	return &Token{str, args}
+	return &Token{str, args, false, ""}
 }
 
 type Preload struct {
