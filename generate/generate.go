@@ -27,8 +27,10 @@ const (
 
 var tmpls *template.Template = template.New("")
 
+var tmplsDir = ""
+
 func init() {
-	tmplsDir := util.GetFullPath(os.Getenv("GOPATH"), "src/github.com/wlMalk/gorator/templates/")
+	tmplsDir = util.GetFullPath(os.Getenv("GOPATH"), "src/github.com/wlMalk/gorator/templates/")
 	tmplFiles, err := filepath.Glob(tmplsDir + "*/*.tmpl")
 	if err != nil {
 		fmt.Println(err.Error())
