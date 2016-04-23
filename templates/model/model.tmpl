@@ -32,6 +32,8 @@ func New{{.Name}}() *{{.Name}} {
 
 {{template "field_funcs" .}}
 
-{{template "model_slice" .}}
+{{template "model_relations" .}}
+
+{{template "model_list" .}}
 
 {{end}}

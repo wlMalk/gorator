@@ -1,12 +1,28 @@
-{{define "model_slice"}}
+{{define "model_list"}}
 
-type {{.Name}}Slice []*{{.Name}}
+type {{.Name}}List []*{{.Name}}
 
-func (self {{.Name}}Slice) Get() error{
+func (self {{.Name}}List) Get() error {
     return nil
 }
 
-func (self {{.Name}}Slice) Each(f func(int ,*{{.Name}})error) error {
+func (self {{.Name}}List) HasChanged() (b bool) {
+    for i := range self{
+        if self[i].HasChanged() {
+            b = true
+            break
+        }
+    }
+    return
+}
+
+func (self {{.Name}}List) Touch() {
+    for i := range self{
+        self[i].Touch()
+    }
+}
+
+func (self {{.Name}}List) Each(f func(int ,*{{.Name}}) error) error {
     var err error
     for i, m := range self {
         err = f(i,m)
@@ -17,8 +33,23 @@ func (self {{.Name}}Slice) Each(f func(int ,*{{.Name}})error) error {
     return nil
 }
 
+func (self {{.Name}}List) EachParallel(f func(int ,*{{.Name}})error) error {
+    e:=make(chan error)
+    for i, m := range self {
+        func(){
+            e <- f(i,m)
+        }()
+    }
+    for err := range e {
+        if err!=nil{
+            return err
+        }
+    }
+    return nil
+}
+
 // SaveTX
-func (self {{.Name}}Slice) Save() error {
+func (self {{.Name}}List) Save() error {
     var err error
     for _, m:= range self{
         err = m.Save() // SaveTX or SaveWith
@@ -29,27 +60,27 @@ func (self {{.Name}}Slice) Save() error {
     return nil
 }
 
-func (self {{.Name}}Slice) Load() error {
+func (self {{.Name}}List) Load() error {
     return nil
 }
 
-func (self {{.Name}}Slice) LoadWith() error {
+func (self {{.Name}}List) LoadWith() error {
     return nil
 }
 
-func (self {{.Name}}Slice) Delete() error {
+func (self {{.Name}}List) Delete() error {
     return nil
 }
 
-func (self {{.Name}}Slice) SoftDelete() error {
+func (self {{.Name}}List) SoftDelete() error {
     return nil
 }
 
-func (self {{.Name}}Slice) MarshalJSON() ([]byte, error) {
+func (self {{.Name}}List) MarshalJSON() ([]byte, error) {
 	return self.ToJSON() // apply if user wants to use stdlib
 }
 
-func (self {{.Name}}Slice) ToJSON() ([]byte, error) {
+func (self {{.Name}}List) ToJSON() ([]byte, error) {
     var b bytes.Buffer
 	var err error
 
@@ -83,17 +114,17 @@ func (self {{.Name}}Slice) ToJSON() ([]byte, error) {
 }
 
  // apply all conditions whether json, xml are used, and from where
-func (self *{{.Name}}Slice) FromJSON(b []byte, tokens []byte, positions []int) error { // allow option to hold extra json fields
+func (self *{{.Name}}List) FromJSON(b []byte, tokens []byte, positions []int) error { // allow option to hold extra json fields
 	var quotesOpened bool
 
-	var lastOpenedBraces int // if includes structs or slices of structs
-	// var lastOpenedBrackets int // if includes slices or includes structs that include slices
+	var lastOpenedBraces int // if includes structs or lists of structs
+	// var lastOpenedBrackets int // if includes lists or includes structs that include lists
 
 	var level int
 
 	var i int
 
-	// var key string // if slice
+	// var key string // if list
 
 	for i = 0; i < len(tokens); i++ {
 		if tokens[i] == json.LBRACES {
@@ -123,15 +154,15 @@ func (self *{{.Name}}Slice) FromJSON(b []byte, tokens []byte, positions []int) e
 			}
 		} else if tokens[i] == json.LBRACKET {
 			// if level == 1 {
-			// 	lastOpenedBrackets = positions[i] if includes slices
+			// 	lastOpenedBrackets = positions[i] if includes lists
 			// }
 			// lastOpenedBrackets = positions[i]
 			level++
-		} else if tokens[i] == json.RBRACKET { // slice, dont incluse if struct doesnt have struct and doesnt have slices
+		} else if tokens[i] == json.RBRACKET { // list, dont incluse if struct doesnt have struct and doesnt have lists
 			level--
-			// if level == 1 { // if include slices
+			// if level == 1 { // if include lists
 			// 	switch key {
-			// 	// list all slices
+			// 	// list all lists
 			// 	case "posts":
 			// 		self.Posts.FromJSON(b[lastOpenedBraces:positions[i]])
 			// 	}
@@ -139,7 +170,7 @@ func (self *{{.Name}}Slice) FromJSON(b []byte, tokens []byte, positions []int) e
 		} else if tokens[i] == json.QUOTE {
 			if quotesOpened { // string
 				quotesOpened = false
-				// if level == 1 { // if includes structs or slices of structs
+				// if level == 1 { // if includes structs or lists of structs
 				// 	if key == "" {
 				// 		key = string(b[positions[i-1]:positions[i]])
 				// 	} else {
@@ -149,7 +180,7 @@ func (self *{{.Name}}Slice) FromJSON(b []byte, tokens []byte, positions []int) e
 				// 			self.Name = string(b[positions[i-1]:positions[i]])
 				// 		}
 				// 	}
-				// } else if it is a slice of strings
+				// } else if it is a list of strings
 				// v = string(b[positions[i-1]:positions[i]])
 				if level == 1 {
 					return fmt.Errorf("JSON Decoding: invalid input")
@@ -169,15 +200,15 @@ func (self *{{.Name}}Slice) FromJSON(b []byte, tokens []byte, positions []int) e
 			// 		}
 			// 		self.Id = vc
 			// 	}
-			// }else if it is a slice of number, nulls or bools
+			// }else if it is a list of number, nulls or bools
 			// v := string(b[positions[i-1]+1 : positions[i]])
 			// vc, err := strconv.Atoi(v) // if type int
 			// 		if err != nil {
 			// 			return err
 			// 		}
 			return fmt.Errorf("JSON Decoding: invalid input")
-		} else if (tokens[i] == json.COMMA || tokens[i] == json.RBRACES) && tokens[i-1] == json.COMMA { // number, nil, bool // only in slices
-			if level == 1 { // if slice of structs
+		} else if (tokens[i] == json.COMMA || tokens[i] == json.RBRACES) && tokens[i-1] == json.COMMA { // number, nil, bool // only in lists
+			if level == 1 { // if list of structs
 				v := strings.TrimSpace(string(b[positions[i-1]+1 : positions[i]]))
 				if v == "null" {
 					*self = append(*self, nil)
@@ -190,19 +221,19 @@ func (self *{{.Name}}Slice) FromJSON(b []byte, tokens []byte, positions []int) e
 	return nil
 }
 
-func (self *{{.Name}}Slice) UnmarshalJSON(b []byte) error {
+func (self *{{.Name}}List) UnmarshalJSON(b []byte) error {
 	return json.Parse(b, self)
 }
 
-func (self *{{.Name}}Slice) Scan(v interface{}) error {
+func (self *{{.Name}}List) Scan(v interface{}) error {
 	b, ok := v.([]byte)
 	if !ok {
-		return fmt.Errorf("scan source was not []byte for '%s' slice", "{{.Name}}")
+		return fmt.Errorf("scan source was not []byte for '%s' list", "{{.Name}}")
 	}
     return json.Parse(b, self) // allow option to make it xml
 }
 
-func (self *{{.Name}}Slice) Populate(rows odatabase.Rower) error {
+func (self *{{.Name}}List) Populate(rows odatabase.Rower) error {
 	columns, err := rows.Columns()
 	if err != nil {
 		return err
@@ -222,9 +253,14 @@ func (self *{{.Name}}Slice) Populate(rows odatabase.Rower) error {
 	return nil
 }
 
-// merge slices
-// find difference in slices
+// merge lists
+// find difference in lists
 // find similarities
 // Distinct
 //
+
+{{template "list_field_funcs" .}}
+
+{{template "list_relations" .}}
+
 {{end}}

@@ -1,0 +1,92 @@
+{{define "model_relations"}}
+{{range .Relations}}
+func (self *{{$.Name}}) {{.Name}}Changed() bool {
+	return self.{{unexport $.Name}}.{{.Name}}.HasChanged()
+}
+
+func (self *{{$.Name}}) {{.Name}}IsSet() (b bool) {
+	if self.{{unexport $.Name}}.{{.Name}} != nil {
+		b = true
+	}
+	return
+}
+
+func (self *{{$.Name}}) Load{{.Name}}() error {
+    return self.QContextLoad{{.Name}}With(c, q, r)
+}
+
+func (self *{{$.Name}}) QLoad{{.Name}}() error {
+    return self.QContextLoad{{.Name}}With(c, q, r)
+}
+
+func (self *{{$.Name}}) Load{{.Name}}With() error {
+    return self.QContextLoad{{.Name}}With(c, q, r)
+}
+
+func (self *{{$.Name}}) QLoad{{.Name}}With() error {
+    return self.QContextLoad{{.Name}}With(c, q, r)
+}
+
+func (self *{{$.Name}}) ContextLoad{{.Name}}() error {
+    return self.QContextLoad{{.Name}}With(c, q, r)
+}
+
+func (self *{{$.Name}}) QContextLoad{{.Name}}() error {
+    return self.QContextLoad{{.Name}}With(c, q, r)
+}
+
+func (self *{{$.Name}}) ContextLoad{{.Name}}With() error {
+    return self.QContextLoad{{.Name}}With(c, q, r)
+}
+
+func (self *{{$.Name}}) QContextLoad{{.Name}}With() error {
+    return nil
+}
+
+func (self *{{$.Name}}) {{.Name}}() error {}
+
+func (self *{{$.Name}}) {{.Name}}IsSet() error {}
+
+func (self *{{$.Name}}) Set{{.Name}}() error {}
+
+func (self *{{$.Name}}) Set{{.Name}}() error {}
+
+{{end}}
+{{end}}
+
+{{define "list_relations"}}
+{{range .Relations}}
+func (self *{{$.Name}}List) Load{{.Name}}() error {
+    return self.QContextLoad{{.Name}}With(c, q, r)
+}
+
+func (self *{{$.Name}}List) QLoad{{.Name}}() error {
+    return self.QContextLoad{{.Name}}With(c, q, r)
+}
+
+func (self *{{$.Name}}List) Load{{.Name}}With() error {
+    return self.QContextLoad{{.Name}}With(c, q, r)
+}
+
+func (self *{{$.Name}}List) QLoad{{.Name}}With() error {
+    return self.QContextLoad{{.Name}}With(c, q, r)
+}
+
+func (self *{{$.Name}}List) ContextLoad{{.Name}}() error {
+    return self.QContextLoad{{.Name}}With(c, q, r)
+}
+
+func (self *{{$.Name}}List) QContextLoad{{.Name}}() error {
+    return self.QContextLoad{{.Name}}With(c, q, r)
+}
+
+func (self *{{$.Name}}List) ContextLoad{{.Name}}With() error {
+    return self.QContextLoad{{.Name}}With(c, q, r)
+}
+
+func (self *{{$.Name}}List) QContextLoad{{.Name}}With() error {
+    return nil
+}
+
+{{end}}
+{{end}}

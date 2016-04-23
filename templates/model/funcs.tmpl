@@ -26,6 +26,8 @@ func (self *{{.Name}}) Save() error {
 //     return nil
 // }
 
+func (self *{{.Name}}) PrimaryKey() {}
+
 func (self *{{.Name}}) Delete() error {
     return nil
 }
@@ -74,7 +76,7 @@ func (self *{{.Name}}) ToJSON() ([]byte, error) { // specify whether flattened o
 	}
 	{{range .Fields}}
 	{{if .InEncoding}}
-	if self.{{unexport $.Name}}.{{.Name}} == nil || *self.{{unexport $.Name}}.{{.Name}} == {{zeroValue .Type}} {
+	if self.{{unexport $.Name}}.{{.Name}} != nil {
 		_,err = b.WriteString("\"{{.NameInEncoding}}\":")
 		if err!=nil{
 			return nil, err
@@ -165,6 +167,11 @@ func (self *{{.Name}}) Populate(row odatabase.Rower) error {
 		err = row.Scan(fields...)
 		if err != nil {
 			return nil
+		}
+
+		for k, v := range self.{{lower .Name}}.Extra {
+			vv := (*v.(*interface{}))
+			self.{{lower .Name}}.Extra[k] = vv
 		}
 
 		self.new = false

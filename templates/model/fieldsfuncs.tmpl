@@ -1,7 +1,26 @@
 {{define "field_funcs"}}
 {{if .AllowExtra}}
-func (self *{{.Name}}) Extra() map[string]interface{} {
+func  (self *{{.Name}}) Extra() map[string]interface{} {
 	return self.{{unexport .Name}}.Extra
+}
+
+func (self *{{.Name}}) ExtraString(c string) (s string) {
+	v := self.{{unexport .Name}}.Extra[c]
+	if v != nil {
+		b, ok := v.([]byte)
+		if ok {
+			s = string(b)
+		}
+	}
+	return
+}
+
+func (self *{{.Name}}) ExtraInt64(c string) (s int64) {
+	v := self.{{unexport .Name}}.Extra[c]
+	if v != nil {
+		s = v.(int64)
+	}
+	return
 }
 {{end}}
 {{range .Fields}}
@@ -12,7 +31,7 @@ func (self *{{$.Name}}) {{.Name}}Changed() bool {
 }
 
 func (self *{{$.Name}}) {{.Name}}IsSet() (b bool) {
-	if self.{{unexport $.Name}}.{{.Name}} != nil{
+	if self.{{unexport $.Name}}.{{.Name}} != nil {
 		b = true
 	}
 	return
@@ -34,6 +53,36 @@ func (self *{{$.Name}}) Set{{.Name}}(f {{.Type}}) (err error) {
 	self.changed = true
 	self.changes["{{lower .Name}}"] = true
 
+    return
+}
+{{end}}
+{{end}}
+{{end}}
+{{end}}
+
+{{define "list_field_funcs"}}
+{{range .Fields}}
+{{if .InDB}}
+{{if .Exported}}
+func (self {{$.Name}}List) {{.Name}}() (f []{{.Type}}) {
+	// callbacks
+    for i := range self {
+        if self[i].{{.Name}}IsSet() {
+            f = append(f, self[i].{{.Name}}())
+        }
+    }
+	return
+}
+
+func (self {{$.Name}}List) Set{{.Name}}(f {{.Type}}) (err error) {
+	// validations
+	// callbacks
+    for i := range self {
+        err = self[i].Set{{.Name}}(f)
+        if err != nil {
+            return
+        }
+    }
     return
 }
 {{end}}
