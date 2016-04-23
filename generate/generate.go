@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"text/template"
 
 	_ "github.com/wlMalk/gorator/driver/pgsql"
@@ -40,7 +41,7 @@ func init() {
 	}
 }
 
-func Generate(path string, version string) error {
+func Generate(path string, version string, cmd string) error {
 	path = util.GetPath(path)
 
 	if version != "" {
@@ -74,13 +75,40 @@ func Generate(path string, version string) error {
 	}
 	fmt.Printf("\t%s\n", okMsg)
 
-	return GenerateFrom(path, config)
+	return GenerateFrom(path, config, cmd)
 }
 
-func GenerateFrom(path string, config *parser.Config) error {
-	// a, _ := json.Marshal(config)
-	// fmt.Println(string(a))
-	return generateORM(path, config)
+func GenerateFrom(path string, config *parser.Config, cmd string) error {
+	fmt.Printf("generating %s...\n", magenta(cmd)) // if show
+	err := generateORM(path, config)
+	if err != nil {
+		return err
+	}
+	goFiles, err := filepath.Glob(tmplsDir + "*.go")
+	if err != nil {
+		return err
+	}
+	if len(goFiles) > 0 {
+		for _, f := range goFiles {
+			name := filepath.Base(f)
+			if strings.HasSuffix(name, ".inc.go") || strings.HasSuffix(name, ".rep.go") {
+				p := config.GetPackage(name[:len(name)-7])
+				if p == nil {
+					continue
+				}
+				nPath := p.Path + "/" + name
+				if strings.HasSuffix(name, ".rep.go") {
+					nPath = p.Path + "/" + name[:len(name)-7] + ".go"
+				}
+				err = util.MoveFile(util.GetFullPath(path, name), util.GetFullPath(path, nPath))
+				if err != nil {
+					return err
+				}
+			}
+		}
+	}
+	fmt.Printf("happy coding!\n") // if show
+	return nil
 }
 
 func generateORM(path string, config *parser.Config) error {
@@ -155,6 +183,5 @@ func generateORM(path string, config *parser.Config) error {
 
 		w.Reset()
 	}
-	fmt.Printf("happy coding!\n") // if show
 	return nil
 }

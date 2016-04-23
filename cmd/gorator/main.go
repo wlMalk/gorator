@@ -58,7 +58,7 @@ func main() {
 
 				version := c.String("version")
 
-				err = generate.Generate(path, version)
+				err = generate.Generate(path, version, "orm")
 				if err != nil {
 					fmt.Println(err.Error())
 					os.Exit(0)
