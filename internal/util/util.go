@@ -56,6 +56,14 @@ func SaveFile(p string, data []byte) error {
 	return ioutil.WriteFile(p, data, 0666)
 }
 
+func MoveFile(p string, np string) error {
+	err := os.Rename(p, np)
+	if err != nil {
+		return err
+	}
+	return os.Remove(p)
+}
+
 func Primitive(a string) bool {
 	if a == "uint" || a == "uint8" || a == "uint16" || a == "uint32" || a == "uint64" ||
 		a == "int" || a == "int8" || a == "int16" || a == "int32" || a == "int64" ||
