@@ -12,7 +12,15 @@ type Config struct {
 	Packages map[string]*Package
 
 	Databases []*Database
+
+	EncodingJSON          bool
+	EncodingJSONOmitEmpty bool
+	EncodingJSONUseStdLib bool
+	EncodingXML           bool
+	EncodingXMLOmitEmpty  bool
+	EncodingXMLUseStdLib  bool
 }
+
 type Package struct {
 	Config      *Config
 	Name        string
@@ -86,10 +94,17 @@ type Model struct {
 	AllowExtra   bool
 
 	Uuid   int
-	Sliced bool
-	Slice  *Slice
+	Listed bool
+	List   *List
 
 	IsPivot bool
+
+	EncodingJSON          bool
+	EncodingJSONOmitEmpty bool
+	EncodingJSONUseStdLib bool
+	EncodingXML           bool
+	EncodingXMLOmitEmpty  bool
+	EncodingXMLUseStdLib  bool
 }
 
 type PrimaryKey struct {
@@ -127,7 +142,7 @@ type Field struct {
 	Having  bool
 }
 
-type Slice struct {
+type List struct {
 	Model *Model
 	Linq  bool
 }

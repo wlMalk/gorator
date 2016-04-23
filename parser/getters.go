@@ -149,3 +149,12 @@ func (c *Config) GetDrivers() (s []string) {
 	}
 	return
 }
+
+func (c *Config) GetPackage(name string) (p *Package) {
+	for _, pa := range c.Packages {
+		if pa.Name == name {
+			p = pa
+		}
+	}
+	return
+}

@@ -2,6 +2,8 @@ package parser
 
 import (
 	"fmt"
+
+	"github.com/wlMalk/gorator/internal/util"
 )
 
 const (
@@ -14,7 +16,7 @@ const (
 	modelTimestamps   = "timestamps"
 	modelBy           = "by"
 	modelHoldOriginal = "holdOriginal"
-	modelSlice        = "slice"
+	modelList         = "list"
 	modelUuid         = "uuid"
 )
 
@@ -72,7 +74,7 @@ func (mo *Model) parse(name string, m map[interface{}]interface{}) error {
 		return err
 	}
 
-	err = mo.parseSlice(m)
+	err = mo.parseList(m)
 	if err != nil {
 		return err
 	}
@@ -358,14 +360,14 @@ func (mo *Model) parseHoldOriginal(m map[interface{}]interface{}) error {
 	return nil
 }
 
-func (mo *Model) parseSlice(m map[interface{}]interface{}) error {
-	avi, ok := m[modelSlice]
+func (mo *Model) parseList(m map[interface{}]interface{}) error {
+	avi, ok := m[modelList]
 	if ok {
 		av, ok := avi.(bool)
 		if !ok {
-			return fmt.Errorf("could not parse '%s' for '%s' model", modelSlice, mo.Name)
+			return fmt.Errorf("could not parse '%s' for '%s' model", modelList, mo.Name)
 		}
-		mo.Sliced = av
+		mo.Listed = av
 	}
 	return nil
 }
@@ -399,6 +401,54 @@ func (mo *Model) finalize(m map[interface{}]interface{}) error {
 	// for _, f := range mo.Fields {
 	// 	f.Type = types[f.TypeInDB]
 	// }
+
+	createTimestamp := func(name string) {
+		f := &Field{}
+		f.def()
+		f.Model = mo
+		f.Name = name + "At"
+		f.NameInEncoding = util.Snakecase(f.Name)
+		f.NameInDB = f.Model.Table.Name + "_" + f.NameInEncoding
+		f.TypeInDB = "timestamp"
+		f.Type = f.Model.Database.Driver.Type(f.TypeInDB)
+		f.Primitive = util.Primitive(f.Type)
+		mo.Fields = append(mo.Fields, f)
+	}
+
+	if mo.CreatedAt {
+		createTimestamp("Created")
+	}
+	if mo.UpdatedAt {
+		createTimestamp("Updated")
+	}
+	if mo.DeletedAt {
+		createTimestamp("Deleted")
+	}
+
+	createBy := func(name string) {
+		f := &Field{}
+		f.def()
+		f.Model = mo
+		f.Name = name + "By"
+		f.NameInEncoding = util.Snakecase(f.Name)
+		f.NameInDB = f.Model.Table.Name + "_" + f.NameInEncoding
+		f.TypeInDB = "timestamp" // get timestamp type from driver
+		f.Type = f.Model.Database.Driver.Type(f.TypeInDB)
+		f.Primitive = util.Primitive(f.Type)
+		mo.Fields = append(mo.Fields, f)
+	}
+
+	if mo.CreatedBy {
+		createBy("Created")
+	}
+	if mo.UpdatedBy {
+		createBy("Updated")
+	}
+	if mo.DeletedBy {
+		createBy("Deleted")
+	}
+
+	// finalize relations
 
 	return nil
 }

@@ -29,7 +29,7 @@ func (mo *Model) def() {
 
 	mo.Uuid = 4
 
-	mo.Sliced = true
+	mo.Listed = true
 
 	mo.defPrimaryKey()
 
