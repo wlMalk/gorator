@@ -181,6 +181,10 @@ func (s *{{.Name}}Select) Alias(a string) *{{.Name}}Select {
 	return s
 }
 
+func (s *{{.Name}}Select) GetAlias() string {
+    return s.query.GetAlias()
+}
+
 func (s *{{.Name}}Select) With(c ...interface{}) *{{.Name}}Select {
     c, args, err:=oquery.TokenizeAll(c...)
     if err==nil{
