@@ -18,10 +18,10 @@ func init(){
 		}
         return nil
 	})
-    callback.{{$.Name}}.{{upper .}}Slice(func(r odatabase.Runner, q oquery.Query, m odatabase.Slice) error {
-		ma := m.(*model.{{$.Name}}Slice)
+    callback.{{$.Name}}.{{upper .}}List(func(r odatabase.Runner, q oquery.Query, m odatabase.List) error {
+		ma := m.(*model.{{$.Name}}List)
         var err error
-		for _, c := range {{plural $.Name}}.{{.}}SliceCallbacks {
+		for _, c := range {{plural $.Name}}.{{.}}ListCallbacks {
 			err = c(r, q, ma)
             if err != nil{
                 return err
@@ -37,7 +37,7 @@ type {{lower (plural .Name)}} struct{
 
     {{range .Callbacks}}
     {{.}}Callbacks []func(odatabase.Runner, oquery.Query, *model.{{$.Name}}) error
-    {{.}}SliceCallbacks []func(odatabase.Runner, oquery.Query, *model.{{$.Name}}Slice) error
+    {{.}}ListCallbacks []func(odatabase.Runner, oquery.Query, *model.{{$.Name}}List) error
     {{end}}
 }
 
@@ -45,11 +45,11 @@ func (self *{{lower (plural .Name)}}) New() *model.{{.Name}} {
 	return model.New{{.Name}}()
 }
 
-func (self *{{lower (plural .Name)}}) NewSlice() model.{{.Name}}Slice {
-    return model.{{.Name}}Slice{}
+func (self *{{lower (plural .Name)}}) NewList() model.{{.Name}}List {
+    return model.{{.Name}}List{}
 }
 
-func (self *{{lower (plural .Name)}}) Query(q oquery.Query) (model.{{.Name}}Slice, error) {
+func (self *{{lower (plural .Name)}}) Query(q oquery.Query) (model.{{.Name}}List, error) {
     str, args, err := q.ToSql()
     if err != nil {
         return nil, err
@@ -80,13 +80,13 @@ func (self *{{lower (plural .Name)}}) Exec(q oquery.Query) (odatabase.Result, er
     return self.RawExec(str, args...)
 }
 
-func (self *{{lower (plural .Name)}}) RawQuery(str string, args ...interface{}) (model.{{.Name}}Slice, error) {
+func (self *{{lower (plural .Name)}}) RawQuery(str string, args ...interface{}) (model.{{.Name}}List, error) {
     rows, err := self.{{.Name}}.RawQuery(str, args...)
     if err != nil {
         return nil, err
     }
 
-    sli := self.NewSlice()
+    sli := self.NewList()
     err = sli.Populate(rows)
     if err != nil{
         return nil, err
@@ -135,13 +135,13 @@ func (self *{{lower (plural .Name)}}) SoftDelete() *query.{{.Name}}Update {
 	return self.{{.Name}}.SoftDelete()
 }{{end}}
 
-func (self *{{lower (plural .Name)}}) All() (model.{{.Name}}Slice, error) {
+func (self *{{lower (plural .Name)}}) All() (model.{{.Name}}List, error) {
 	rows, err := self.{{.Name}}.All()
     if err != nil {
         return nil, err
     }
 
-    sli := self.NewSlice()
+    sli := self.NewList()
     err = sli.Populate(rows)
     if err != nil{
         return nil, err
@@ -205,8 +205,8 @@ func (self *{{lower (plural .Name)}}) Last() (*model.{{.Name}}, error) {
 func (self *{{lower (plural $.Name)}}) Add{{upper .}}Callback(f ...func(odatabase.Runner, oquery.Query, *model.{{$.Name}}) error){
     self.{{.}}Callbacks = append(self.{{.}}Callbacks, f...)
 }
-func (self *{{lower (plural $.Name)}}) Add{{upper .}}SliceCallback(f ...func(odatabase.Runner, oquery.Query, *model.{{$.Name}}Slice) error){
-    self.{{.}}SliceCallbacks = append(self.{{.}}SliceCallbacks, f...)
+func (self *{{lower (plural $.Name)}}) Add{{upper .}}ListCallback(f ...func(odatabase.Runner, oquery.Query, *model.{{$.Name}}List) error){
+    self.{{.}}ListCallbacks = append(self.{{.}}ListCallbacks, f...)
 }
 {{end}}
 {{end}}
