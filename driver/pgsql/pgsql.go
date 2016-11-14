@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/wlMalk/gorator/driver"
+	"github.com/wlMalk/gorator/internal/util"
 )
 
 type Driver struct {
@@ -30,22 +31,22 @@ func init() {
 		"varchar":   "string",
 	}
 
-	generate := map[string]bool{
-		"database": true,
-		"orm":      true,
-		"query":    true,
-		"model":    true,
-		"callback": true,
-	}
-
-	tmplsDir := os.Getenv("GOPATH") + "/src/github.com/wlMalk/gorator/driver/pgsql/templates/"
-	files, err := filepath.Glob(tmplsDir + "*/*.tmpl")
+	tmplsDir := os.Getenv("GOPATH") + "/src/github.com/wlMalk/gorator/templates/"
+	files, err := filepath.Glob(tmplsDir + "pgsql.*.tmpl")
 	if err != nil {
 		fmt.Println(err.Error())
 		os.Exit(0)
 	}
+	commons, err := filepath.Glob(tmplsDir + "common.*.tmpl")
+	if err != nil {
+		fmt.Println(err.Error())
+		os.Exit(0)
+	}
+	files = append(files, commons...)
 
-	pgsql = &Driver{driver.New("pgsql", types, generate, files)}
+	pgsql = &Driver{driver.New("pgsql", types, files)}
+	pgsql.SetFuncs(util.GetFuncsMap())
+	pgsql.Parse()
 
 	driver.Register(pgsql)
 }
