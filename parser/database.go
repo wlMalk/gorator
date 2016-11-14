@@ -29,6 +29,10 @@ func (d *Database) parse(name string, m map[interface{}]interface{}) error {
 }
 
 func (d *Database) parseDriver(m map[interface{}]interface{}) error {
+	if _, ok := m[databaseDriver]; ok {
+		d.DriverName = s(m[databaseDriver])
+	}
+
 	dr, err := driver.Get(d.DriverName)
 	if err != nil {
 		return err
