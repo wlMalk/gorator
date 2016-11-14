@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go/format"
 	"io/ioutil"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -25,23 +26,7 @@ const (
 	VERSION = "0.1"
 )
 
-var tmpls *template.Template = template.New("")
-
-var tmplsDir = ""
-
-func init() {
-	tmplsDir = util.GetFullPath(os.Getenv("GOPATH"), "src/github.com/wlMalk/gorator/templates/")
-	tmplFiles, err := filepath.Glob(tmplsDir + "*/*.tmpl")
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(0)
-	}
-	tmpls, err = tmpls.Funcs(util.GetFuncsMap()).ParseFiles(tmplFiles...)
-	if err != nil {
-		fmt.Println(err.Error())
-		os.Exit(0)
-	}
-}
+var headingTmpl *template.Template = template.Must(template.ParseFiles(util.GetFullPath(os.Getenv("GOPATH"), "src/github.com/wlMalk/gorator/templates/heading.tmpl")))
 
 func Generate(path string, version string, cmd string) error {
 	path = util.GetPath(path)
@@ -86,22 +71,28 @@ func GenerateFrom(path string, config *parser.Config, cmd string) error {
 	if err != nil {
 		return err
 	}
-	goFiles, err := filepath.Glob(tmplsDir + "*.go")
+
+	// find if any go files are provided, then move them to their right path
+	goFiles, err := filepath.Glob(util.GetFullPath(config.Path, "*.go"))
 	if err != nil {
 		return err
 	}
 	if len(goFiles) > 0 {
 		for _, f := range goFiles {
 			name := filepath.Base(f)
-			if strings.HasSuffix(name, ".inc.go") || strings.HasSuffix(name, ".rep.go") {
-				p := config.GetPackage(name[:len(name)-7])
+
+			if strings.HasSuffix(name, ".inc.go") {
+				p := config.GetPackage(name[int(math.Max(0, float64(strings.Index(name[:len(name)-7], ".")))) : len(name)-7])
 				if p == nil {
 					continue
 				}
-				nPath := p.Path + "/" + name
-				if strings.HasSuffix(name, ".rep.go") {
-					nPath = p.Path + "/" + name[:len(name)-7] + ".go"
+				nName := strings.TrimSpace(name[:len(name)-len(p.Name)-8])
+				if len(nName) == 0 {
+					nName = p.Name
 				}
+				nName += ".inc.go"
+
+				nPath := util.GetFullPath(path, util.GetFullPath(p.Path, nName))
 				err = util.MoveFile(util.GetFullPath(path, name), util.GetFullPath(path, nPath))
 				if err != nil {
 					return err
@@ -123,42 +114,22 @@ func generateORM(path string, config *parser.Config) error {
 		fmt.Printf("\t%s\n", okMsg)
 
 		var w bytes.Buffer
-		err = tmpls.ExecuteTemplate(&w, "heading", p)
+		err = headingTmpl.ExecuteTemplate(&w, "heading", p)
 		if err != nil {
 			return err
 		}
 		for _, db := range config.Databases {
 			if p.Name != "database" {
 				for _, model := range db.Models {
-					if db.Driver.Generate(p.Name) {
-						fmt.Printf("generating code for %s package - %s model...", magenta(p.Name), magenta(model.Name)) // if show
-						err = tmpls.ExecuteTemplate(&w, p.Name, model)
-						if err != nil {
-							return err
-						}
-						fmt.Printf("\t%s\n", okMsg)
-					} else {
-						// driver headings
-						fmt.Printf("generating %s driver code for %s package - %s model...", magenta(db.Driver.Name()), magenta(p.Name), magenta(model.Name)) // if show
-						err = db.Driver.Execute(&w, p.Name, model)
-						if err != nil {
-							return err
-						}
-						fmt.Printf("\t%s\n", okMsg)
-					}
-				}
-			} else {
-				if db.Driver.Generate(p.Name) {
-					fmt.Printf("generating code for %s database...", magenta(db.Name)) // if show
-					err = tmpls.ExecuteTemplate(&w, p.Name, db)
+					fmt.Printf("generating %s driver code for %s package - %s model...", magenta(db.Driver.Name()), magenta(p.Name), magenta(model.Name)) // if show
+					err = db.Driver.Execute(&w, p.Name, model)
 					if err != nil {
 						return err
 					}
 					fmt.Printf("\t%s\n", okMsg)
 				}
-				// driver headings
-				// check if tmp is provided
-				fmt.Printf("generating %s driver code for %s database...", magenta(db.Driver.Name()), magenta(db.Name)) // if show
+			} else {
+				fmt.Printf("generating %s driver code for %s package - %s model...", magenta(db.Driver.Name()), magenta(p.Name), magenta(db.Name)) // if show
 				err = db.Driver.Execute(&w, p.Name, db)
 				if err != nil {
 					return err
@@ -177,7 +148,7 @@ func generateORM(path string, config *parser.Config) error {
 		fmt.Printf("\t%s\n", okMsg)
 
 		fmt.Printf("saving %s package file...", magenta(p.Name)) // if show
-		err = util.SaveFile(util.GetFullPath(path, p.Path+"/"+p.Name+"_gen.go"), b)
+		err = util.SaveFile(util.GetFullPath(path, p.Path+"/"+p.Name+".gen.go"), b)
 		if err != nil {
 			return err
 		}
