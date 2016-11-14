@@ -154,7 +154,7 @@ func (s *{{.Name}}Select) Joins(c ...*oquery.JoinToken) *{{.Name}}Select {
                 s.args = append(s.args, ab)
             }
         }else{
-            c = append(c[:i], c[i+1:]...)
+            c = append(c[:i], c[i+1:]...) // see how this works
         }
     }
     s.query.Joins(c...)

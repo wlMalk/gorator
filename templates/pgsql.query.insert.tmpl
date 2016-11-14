@@ -1,0 +1,9 @@
+{{define "query_insert"}}
+type {{.Name}}Insert struct{
+}
+
+func (self *{{.Name}}) Insert() *{{.Name}}Insert {
+	return nil //{{plural (unexport .Name)}}
+	//setForAll in bulk insert as an optimization
+}
+{{end}}

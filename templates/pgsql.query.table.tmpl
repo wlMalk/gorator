@@ -16,11 +16,6 @@ func init(){
 
 // save func
 
-{{if .SoftDelete}}
-func (self *{{.Name}}) SoftDelete() *{{.Name}}Update {
-	return nil
-}{{end}}
-
 func (self *{{.Name}}) Exec(q oquery.Query) (odatabase.Result, error) { // q ...oquery.Query
     return database.Get{{upper .Database.Name}}().ExecQ(q)
 }

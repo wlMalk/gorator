@@ -6,6 +6,9 @@ func init(){
     {{plural .Name}} = &{{lower (plural .Name)}}{
         {{.Name}}: query.{{plural .Name}}, // no need for this
     }
+
+    model.{{.Name}}ORM = {{plural .Name}}
+
     {{range .Callbacks}}
     callback.{{$.Name}}.{{upper .}}(func(r odatabase.Runner, q oquery.Query, m odatabase.Model) error {
 		ma := m.(*model.{{$.Name}})

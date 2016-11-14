@@ -1,0 +1,8 @@
+{{define "query_update"}}
+type {{.Name}}Update struct{
+}
+
+func (self *{{.Name}}) Update() *{{.Name}}Update {
+	return nil //{{plural (unexport .Name)}}
+}
+{{end}}

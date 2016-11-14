@@ -1,0 +1,19 @@
+{{define "query_delete"}}
+type {{.Name}}Delete struct{
+}
+
+{{if .SoftDelete}}
+func (self *{{.Name}}) Delete() *{{.Name}}Update {
+	return nil
+}
+
+func (self *{{.Name}}) HardDelete() *{{.Name}}Delete {
+	return nil
+}
+
+{{else}}
+func (self *{{.Name}}) Delete() *{{.Name}}Delete {
+	return nil
+}
+{{end}}
+{{end}}

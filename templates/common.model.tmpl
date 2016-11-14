@@ -1,0 +1,64 @@
+{{define "model"}}
+type {{lower .Name}} struct{
+	{{range .Fields}}{{if .InDB}}{{.Name}} {{if or (not .Primitive) .Null}}*{{end}}{{.Type}}{{end}}
+	{{end}}
+	{{if .AllowExtra}}
+	Extra map[string]interface{}
+	{{end}}
+}
+
+type {{.Name}} struct{
+    {{lower .Name}} *{{lower .Name}}
+
+    new bool
+	retrieved bool
+
+    changed bool
+	changes map[string]bool
+}
+
+func New{{.Name}}() *{{.Name}} {
+	return &{{.Name}}{
+        {{lower .Name}}: &{{lower .Name}}{ {{if .AllowExtra}}
+			Extra: map[string]interface{}{},
+		{{end}}},
+		changes: map[string]bool{},
+        new: true,
+    }
+}
+
+{{template "model_ormer" .}}
+
+{{template "model_funcs" .}}
+
+{{template "field_funcs" .}}
+
+{{template "model_relations" .}}
+
+{{template "model_list" .}}
+
+{{end}}
+
+{{define "model_ormer"}}
+type {{unexport .Name}}ORMer interface{
+		New() *model.{{.Name}}
+		NewList() model.{{.Name}}List
+		Query(q oquery.Query) (model.{{.Name}}List, error)
+		QueryRow(q oquery.Query) (*model.{{.Name}}, error)
+		Exec(q oquery.Query) (odatabase.Result, error)
+		RawQuery(str string, args ...interface{}) (model.{{.Name}}List, error)
+		RawQueryRow(str string, args ...interface{}) (*model.{{.Name}}, error)
+		RawExec(str string, args ...interface{}) (odatabase.Result, error)
+		Select(c ...string) *query.{{.Name}}Select
+		Update(c ...interface{}) *query.{{.Name}}Update
+		Insert(c ...interface{}) *query.{{.Name}}Insert
+		Delete(c ...interface{}) *query.{{.Name}}Delete
+		{{if .SoftDelete}}SoftDelete() *query.{{.Name}}Update{{end}}
+		All() (model.{{.Name}}List, error)
+		Find({{range .PrimaryKey.GetFields}}{{lower .Name}} {{.Type}}, {{end}}) (*model.{{.Name}}, error)
+		First() (*model.{{.Name}}, error)
+		Last() (*model.{{.Name}}, error)
+}
+
+var {{.Name}}ORM {{unexport .Name}}ORMer
+{{end}}

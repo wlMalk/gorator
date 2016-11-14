@@ -11,6 +11,8 @@ func (self *{{$.Name}}) {{.Name}}IsSet() (b bool) {
 	return
 }
 
+// load, queryload, every method that interacts with the database should require context
+
 func (self *{{$.Name}}) Load{{.Name}}() error {
     return self.QContextLoad{{.Name}}With(c, q, r)
 }
@@ -89,4 +91,9 @@ func (self *{{$.Name}}List) QContextLoad{{.Name}}With() error {
 }
 
 {{end}}
+{{end}}
+
+{{define "model_relation_has_one"}}
+	query := Select(select from relation...).Where{{.ForeignKey}}Eq(self.{{unexport .Model.Name}}.{{.Name}})
+}
 {{end}}
