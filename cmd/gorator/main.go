@@ -60,6 +60,7 @@ func main() {
 
 				err = generate.Generate(path, version, "orm")
 				if err != nil {
+					fmt.Println("")
 					fmt.Println(err.Error())
 					os.Exit(0)
 				}
