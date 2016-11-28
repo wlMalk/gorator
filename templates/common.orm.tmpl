@@ -138,12 +138,7 @@ func (self *{{lower (plural .Name)}}) SoftDelete() *query.{{.Name}}Update {
 	return self.{{.Name}}.SoftDelete()
 }{{end}}
 
-func (self *{{lower (plural .Name)}}) All() (model.{{.Name}}List, error) {
-	rows, err := self.{{.Name}}.All()
-    if err != nil {
-        return nil, err
-    }
-
+func (self *{{lower (plural .Name)}}) populateSlice(rows odatabase.Rower) (model.{{.Name}}List, error) {
     sli := self.NewList()
     err = sli.Populate(rows)
     if err != nil{
@@ -153,25 +148,39 @@ func (self *{{lower (plural .Name)}}) All() (model.{{.Name}}List, error) {
     return sli, nil
 }
 
-func (self *{{lower (plural .Name)}}) Find({{range .PrimaryKey.GetFields}}{{lower .Name}} {{.Type}}, {{end}}) (*model.{{.Name}}, error) { // check what primary key is called and whether its multiple
-	row, err := self.{{.Name}}.Find({{range .PrimaryKey.GetFields}}{{lower .Name}}, {{end}})
+func (self *{{lower (plural .Name)}}) populateModel(row odatabase.Rower) (model.{{.Name}}, error) {
+  mod := self.New()
+  err = mod.Populate(row)
+
+  if err != nil{
+      return nil, err
+  }
+
+  return mod, nil
+}
+
+func (self *{{lower (plural .Name)}}) All() (model.{{.Name}}List, error) {
+    rows, err := self.{{.Name}}.All()
     if err != nil {
         return nil, err
     }
 
-    mod := self.New()
-    err = mod.Populate(row)
-    if err != nil{
-        if err == odatabase.ErrNoRows {
-            {{range .PrimaryKey.GetFields}}
-            mod.Set{{.Name}}({{lower .Name}})
-            {{end}}
-            return mod, nil
-        }
+    return self.populateSlice(rows)
+}
+
+func (self *{{lower (plural .Name)}}) Find({{range .PrimaryKey.GetFields}}{{lower .Name}} {{.Type}}, {{end}}) (*model.{{.Name}}, error) { // check what primary key is called and whether its multiple
+	  row, err := self.{{.Name}}.Find({{range .PrimaryKey.GetFields}}{{lower .Name}}, {{end}})
+
+    if err == odatabase.ErrNoRows {
+        {{range .PrimaryKey.GetFields}}
+        mod.Set{{.Name}}({{lower .Name}})
+        {{end}}
+        return mod, nil
+    }else if err != nil {
         return nil, err
     }
 
-    return mod, nil
+    return self.populateModel(row)
 }
 
 func (self *{{lower (plural .Name)}}) First() (*model.{{.Name}}, error) {
@@ -180,13 +189,7 @@ func (self *{{lower (plural .Name)}}) First() (*model.{{.Name}}, error) {
         return nil, err
     }
 
-    mod := self.New()
-    err = mod.Populate(row)
-    if err != nil{
-        return nil, err
-    }
-
-    return mod, nil
+    return self.populateModel(row)
 }
 
 func (self *{{lower (plural .Name)}}) Last() (*model.{{.Name}}, error) {
@@ -195,13 +198,7 @@ func (self *{{lower (plural .Name)}}) Last() (*model.{{.Name}}, error) {
         return nil, err
     }
 
-    mod := self.New()
-    err = mod.Populate(row)
-    if err != nil{
-        return nil, err
-    }
-
-    return mod, nil
+    return self.populateModel(row)
 }
 
 {{range .Callbacks}}
