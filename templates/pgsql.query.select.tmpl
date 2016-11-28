@@ -233,7 +233,7 @@ func (s *{{.Name}}Select) All() *{{.Name}}Select {
 }
 
 func (s *{{.Name}}Select) Find({{range .PrimaryKey.GetFields}}{{lower .Name}} {{.Type}}, {{end}}) *{{.Name}}Select {
-	s{{range .PrimaryKey.GetFields}}.Where{{.Name}}Eq({{lower .Name}}){{end}}.First()
+	s{{range .PrimaryKey.GetFields}}.Where{{.Name}}(Eq, {{lower .Name}}){{end}}.First()
 	return s
 }
 

@@ -45,7 +45,7 @@ func (self *{{.Name}}) All() (odatabase.Rower, error) {
 }
 
 func (self *{{.Name}}) Find({{range .PrimaryKey.GetFields}}{{lower .Name}} {{.Type}}, {{end}}) (odatabase.Rower, error) { // check what primary key is called and whether its multiple
-	return self.Select(){{range .PrimaryKey.GetFields}}.Where{{.Name}}Eq({{lower .Name}}){{end}}.First().QueryRow()
+	return self.Select(){{range .PrimaryKey.GetFields}}.Where{{.Name}}(Eq, {{lower .Name}}){{end}}.First().QueryRow()
 }
 
 func (self *{{.Name}}) First() (odatabase.Rower, error) { //nth, pagination

@@ -1,0 +1,36 @@
+{{define "query_table_where"}}
+{{range .Fields}}
+{{if primitive .Type}}
+func (self *{{$.Name}}) Filter{{.Name}}In(a ...{{.Type}}) *oquery.Token {
+    na := make([]interface{}, len(a))
+    for i, v := range a {
+        na[i] = v
+    }
+    return oquery.In(self.Column("{{.NameInEncoding}}"), na...)
+}
+
+func (self *{{$.Name}}) Filter{{.Name}}InQuery(q oquery.Query) *oquery.Token {
+    return oquery.InQuery(self.Column("{{.NameInEncoding}}"), q)
+}
+
+func (self *{{$.Name}}) Filter{{.Name}}(o operator, a {{.Type}}) *oquery.Token {
+  switch o {
+    case Eq:
+      return oquery.Eq(self.Column("{{.NameInEncoding}}"),"", a)
+    case NotEq:
+      return oquery.NotEq(self.Column("{{.NameInEncoding}}"),"", a)
+    case Lt:
+      return oquery.Lt(self.Column("{{.NameInEncoding}}"),"", a)
+    case LtEq:
+      return oquery.LtEq(self.Column("{{.NameInEncoding}}"),"", a)
+    case Gt:
+      return oquery.Gt(self.Column("{{.NameInEncoding}}"),"", a)
+    case GtEq:
+      return oquery.GtEq(self.Column("{{.NameInEncoding}}"),"", a)
+  }
+  return nil
+}
+
+{{end}}
+{{end}}
+{{end}}

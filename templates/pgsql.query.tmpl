@@ -1,5 +1,16 @@
 {{define "query"}}
 
+type operator int
+
+const (
+	Eq operator = iota
+  NotEq
+	Lt
+	LtEq
+	Gt
+	GtEq
+)
+
 {{template "query_select" .}}
 
 {{template "query_update" .}}

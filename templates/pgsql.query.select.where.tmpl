@@ -1,43 +1,22 @@
 {{define "query_select_where"}}
 {{range .Fields}}
 {{if primitive .Type}}
-func (s *{{$.Name}}Select) Where{{.Name}}In(a ...interface{}) *{{$.Name}}Select  { //change interface to type of field
-    return s.Where({{plural $.Name}}.{{.Name}}In(a...))
+func (s *{{$.Name}}Select) Where{{.Name}}In(a ...{{.Type}}) *{{$.Name}}Select  { //change interface to type of field
+    return s.Where({{plural $.Name}}.Filter{{.Name}}In(a...))
 }
 
 func (s *{{$.Name}}Select) Where{{.Name}}InQuery(q oquery.Query) *{{$.Name}}Select  {
-    return s.Where({{plural $.Name}}.{{.Name}}InQuery(q))
+    return s.Where({{plural $.Name}}.Filter{{.Name}}InQuery(q))
 }
 
 // And, Or // should reset wheres
 
-func (s *{{$.Name}}Select) Where{{.Name}}Eq(a interface{}) *{{$.Name}}Select  {
-    return s.Where({{plural $.Name}}.{{.Name}}Eq(a))
-}
-
-func (s *{{$.Name}}Select) Where{{.Name}}NotEq(a interface{}) *{{$.Name}}Select  {
-    return s.Where({{plural $.Name}}.{{.Name}}NotEq(a))
+func (s *{{$.Name}}Select) Where{{.Name}}(o operator, a {{.Type}}) *{{$.Name}}Select  {
+    return s.Where({{plural $.Name}}.Filter{{.Name}}(o, a))
 }
 
 //if softdeleteable then whereDeleted, whereNotDeleted
 
-{{if numerical .Type}}
-func (s *{{$.Name}}Select) Where{{.Name}}Gt(a interface{}) *{{$.Name}}Select  {
-    return s.Where({{plural $.Name}}.{{.Name}}Gt(a))
-}
-
-func (s *{{$.Name}}Select) Where{{.Name}}Lt(a interface{}) *{{$.Name}}Select  {
-    return s.Where({{plural $.Name}}.{{.Name}}Lt(a))
-}
-
-func (s *{{$.Name}}Select) Where{{.Name}}GtEq(a interface{}) *{{$.Name}}Select  {
-    return s.Where({{plural $.Name}}.{{.Name}}GtEq(a))
-}
-
-func (s *{{$.Name}}Select) Where{{.Name}}LtEq(a interface{}) *{{$.Name}}Select  {
-    return s.Where({{plural $.Name}}.{{.Name}}LtEq(a))
-}
-{{end}}
 {{end}}
 {{end}}
 {{end}}
